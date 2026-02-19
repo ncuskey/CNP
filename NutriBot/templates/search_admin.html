@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Search Admin - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Search Admin</h1>
+{% if reindexed %}<p style="color:#080;">Index rebuilt successfully.</p>{% endif %}
+<p>Full-text search uses SQLite FTS5. Rebuild the index when data changes significantly.</p>
+<table>
+    <tr><th>Last indexed</th><td>{{ meta.last_indexed or 'Never' }}</td></tr>
+    <tr><th>FTS5 available</th><td>{{ 'Yes' if meta.fts5_available else 'No (using LIKE fallback)' }}</td></tr>
+    {% if meta.counts %}
+    <tr><th>Counts</th><td>
+        {% for k, v in meta.counts.items() %}{{ k }}: {{ v }}{% if not loop.last %} | {% endif %}{% endfor %}
+    </td></tr>
+    {% endif %}
+</table>
+<form method="post" action="/search/reindex" style="margin-top:1rem;">
+    <button type="submit" class="btn">Rebuild Index</button>
+</form>
+<p><a href="/search">Back to Search</a></p>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Settings - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">District Settings</h1>
+{% if request.query_params.get('saved') == '1' %}
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    Settings saved.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+<form action="/settings/save" method="post">
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">District Profile</h5></div>
+        <div class="card-body">
+            <div class="row g-2 mb-2">
+                <div class="col-md-6">
+                    <label class="form-label">District Name</label>
+                    <input type="text" name="district_name" class="form-control" value="{{ settings.district_name }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">State</label>
+                    <input type="text" name="state" class="form-control" value="{{ settings.state }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Timezone</label>
+                    <input type="text" name="timezone" class="form-control" value="{{ settings.timezone }}">
+                </div>
+            </div>
+            <div class="mb-0">
+                <label class="form-label">Current School Year</label>
+                <input type="text" name="current_school_year" class="form-control" value="{{ settings.current_school_year }}">
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Programs Operated</h5></div>
+        <div class="card-body">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="nslp" id="nslp" {% if settings.programs.NSLP %}checked{% endif %}>
+                <label class="form-check-label" for="nslp">NSLP</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="sbp" id="sbp" {% if settings.programs.SBP %}checked{% endif %}>
+                <label class="form-check-label" for="sbp">SBP</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="smp" id="smp" {% if settings.programs.SMP %}checked{% endif %}>
+                <label class="form-check-label" for="smp">SMP</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="summer" id="summer" {% if settings.programs.Summer %}checked{% endif %}>
+                <label class="form-check-label" for="summer">Summer</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="cacfp" id="cacfp" {% if settings.programs.CACFP %}checked{% endif %}>
+                <label class="form-check-label" for="cacfp">CACFP</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="ffvp" id="ffvp" {% if settings.programs.FFVP %}checked{% endif %}>
+                <label class="form-check-label" for="ffvp">FFVP</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Operational Deadlines</h5></div>
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label">Monthly claim deadline day</label>
+                    <input type="number" name="monthly_claim_internal_deadline_day" class="form-control" value="{{ settings.monthly_claim_internal_deadline_day }}" min="1" max="28">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Month-end close day</label>
+                    <input type="number" name="month_end_close_day" class="form-control" value="{{ settings.month_end_close_day }}" min="1" max="28">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Verification window start</label>
+                    <input type="text" name="verification_window_start" class="form-control" value="{{ settings.verification_window_start }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Verification complete deadline</label>
+                    <input type="text" name="verification_complete_deadline" class="form-control" value="{{ settings.verification_complete_deadline }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Evidence & Retention Defaults</h5></div>
+        <div class="card-body">
+            <div class="mb-2">
+                <label class="form-label">Default retention policy</label>
+                <textarea name="default_retention_policy" class="form-control" rows="2">{{ settings.default_retention_policy }}</textarea>
+            </div>
+            <div class="mb-0">
+                <label class="form-label">Default minimal audit set</label>
+                <textarea name="default_minimal_audit_set" class="form-control" rows="2">{{ settings.default_minimal_audit_set }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Data Tracking</h5></div>
+        <div class="card-body">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="enable_monthly_claims_tracking" id="enable_claims" value="1" {% if settings.get('enable_monthly_claims_tracking', true) %}checked{% endif %}>
+                <label class="form-check-label" for="enable_claims">Enable monthly claims tracking</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header"><h5 class="mb-0">Storage Paths</h5></div>
+        <div class="card-body">
+            <p class="mb-1"><strong>Vault:</strong> <code>{{ vault_path }}</code></p>
+            <p class="mb-0"><strong>Backups:</strong> <code>{{ backups_path }}</code></p>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+</form>
+{% endblock %}

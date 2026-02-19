@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Edit Compliance Memo — {{ task.template.name if task.template else 'Task' }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Edit Compliance Memo</h1>
+<p><a href="/tasks/{{ task.id }}">← Back to Task</a></p>
+
+<form action="/tasks/{{ task.id }}/docs/memo/save" method="post">
+    <div>
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date" value="{{ content.date }}">
+    </div>
+    <div>
+        <label for="context">Context</label>
+        <textarea id="context" name="context" rows="4">{{ content.context }}</textarea>
+    </div>
+    <div>
+        <label for="actions_taken">Actions Taken</label>
+        <textarea id="actions_taken" name="actions_taken" rows="6">{{ content.actions_taken }}</textarea>
+        <small>Auto-summarized from checklist + notes if left blank.</small>
+    </div>
+    <div>
+        <label for="decision">Decision / Outcome</label>
+        <textarea id="decision" name="decision" rows="4">{{ content.decision }}</textarea>
+    </div>
+    <div>
+        <label for="risks">Risks / Follow-ups</label>
+        <textarea id="risks" name="risks" rows="3">{{ content.risks }}</textarea>
+    </div>
+    <button type="submit" class="btn">Save Memo</button>
+</form>
+
+<p><a href="/tasks/{{ task.id }}/docs/memo" target="_blank">Preview Memo (HTML)</a></p>
+{% endblock %}

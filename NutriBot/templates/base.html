@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BCSD Child Nutrition Ops Console{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/theme.css" rel="stylesheet">
+    <link href="/static/css/adminator-layout.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    {% block head %}{% endblock %}
+</head>
+<body class="app">
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-inner">
+                <div class="sidebar-logo">
+                    <a href="/today">
+                        <h5 class="logo-text">BCSD Child Nutrition</h5>
+                    </a>
+                </div>
+                <ul class="sidebar-menu">
+
+                    <!-- Operations -->
+                    <li class="sidebar-section-label">Operations</li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/today' %}active{% endif %}" href="/today">
+                            <span class="icon-holder"><i class="bi bi-calendar-day"></i></span>
+                            <span class="title">Today</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/dashboard' %}active{% endif %}" href="/dashboard">
+                            <span class="icon-holder"><i class="bi bi-house"></i></span>
+                            <span class="title">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/calendar' %}active{% endif %}" href="/calendar">
+                            <span class="icon-holder"><i class="bi bi-calendar-week"></i></span>
+                            <span class="title">Calendar</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/quick' %}active{% endif %}" href="/quick">
+                            <span class="icon-holder"><i class="bi bi-lightning"></i></span>
+                            <span class="title">Quick Capture</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/inbox' %}active{% endif %}" href="/inbox">
+                            <span class="icon-holder"><i class="bi bi-inbox"></i></span>
+                            <span class="title">Inbox</span>
+                        </a>
+                    </li>
+
+                    <!-- Compliance -->
+                    <li class="sidebar-section-label">Compliance</li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/review' %}active{% endif %}" href="/review">
+                            <span class="icon-holder"><i class="bi bi-clipboard-check"></i></span>
+                            <span class="title">Review</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/evidence' %}active{% endif %}" href="/evidence">
+                            <span class="icon-holder"><i class="bi bi-folder"></i></span>
+                            <span class="title">Evidence</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/retention' %}active{% endif %}" href="/retention">
+                            <span class="icon-holder"><i class="bi bi-shield-check"></i></span>
+                            <span class="title">Retention</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/regulations' %}active{% endif %}" href="/regulations">
+                            <span class="icon-holder"><i class="bi bi-journal-text"></i></span>
+                            <span class="title">Regulations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/claims' %}active{% endif %}" href="/claims">
+                            <span class="icon-holder"><i class="bi bi-currency-dollar"></i></span>
+                            <span class="title">Claims</span>
+                        </a>
+                    </li>
+
+                    <!-- Planning & Analysis -->
+                    <li class="sidebar-section-label">Planning &amp; Analysis</li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/planner' %}active{% endif %}" href="/planner">
+                            <span class="icon-holder"><i class="bi bi-calendar3"></i></span>
+                            <span class="title">Year Planner</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/trends' %}active{% endif %}" href="/trends">
+                            <span class="icon-holder"><i class="bi bi-bar-chart"></i></span>
+                            <span class="title">Trends</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/history' %}active{% endif %}" href="/history">
+                            <span class="icon-holder"><i class="bi bi-clock-history"></i></span>
+                            <span class="title">History</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/comparison' %}active{% endif %}" href="/comparison">
+                            <span class="icon-holder"><i class="bi bi-arrow-left-right"></i></span>
+                            <span class="title">Comparison</span>
+                        </a>
+                    </li>
+
+                    <!-- Templates & Tools -->
+                    <li class="sidebar-section-label">Templates &amp; Tools</li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/templates' %}active{% endif %}" href="/templates">
+                            <span class="icon-holder"><i class="bi bi-file-text"></i></span>
+                            <span class="title">Templates</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/presets' %}active{% endif %}" href="/presets">
+                            <span class="icon-holder"><i class="bi bi-bookmark"></i></span>
+                            <span class="title">Presets</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/assistant-v2' %}active{% endif %}" href="/assistant-v2">
+                            <span class="icon-holder"><i class="bi bi-robot"></i></span>
+                            <span class="title">Assistant</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/search' %}active{% endif %}" href="/search">
+                            <span class="icon-holder"><i class="bi bi-search"></i></span>
+                            <span class="title">Search</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/exports' %}active{% endif %}" href="/exports">
+                            <span class="icon-holder"><i class="bi bi-file-earmark-arrow-down"></i></span>
+                            <span class="title">Exports</span>
+                        </a>
+                    </li>
+
+                    <!-- System -->
+                    <li class="sidebar-section-label">System</li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/hygiene' %}active{% endif %}" href="/hygiene">
+                            <span class="icon-holder"><i class="bi bi-droplet"></i></span>
+                            <span class="title">Hygiene</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/backups' %}active{% endif %}" href="/backups">
+                            <span class="icon-holder"><i class="bi bi-archive"></i></span>
+                            <span class="title">Backups</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link {% if request.url.path == '/settings' %}active{% endif %}" href="/settings">
+                            <span class="icon-holder"><i class="bi bi-gear"></i></span>
+                            <span class="title">Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <!-- Mobile backdrop -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+        <!-- Page container -->
+        <div class="page-container">
+            <!-- Topbar -->
+            <div class="header navbar">
+                <div class="header-container">
+                    <ul class="nav-left">
+                        <li>
+                            <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Toggle sidebar" aria-expanded="false" aria-controls="sidebar">
+                                <i class="bi bi-list"></i>
+                            </button>
+                        </li>
+                        <li>
+                            <form method="get" action="/search" class="d-flex">
+                                <input class="form-control form-control-sm" type="search" name="q" placeholder="Search..." value="{{ request.query_params.get('q', '') }}" style="width: 160px;">
+                                <button type="submit" class="btn btn-sm btn-primary ms-1">Go</button>
+                            </form>
+                        </li>
+                    </ul>
+                    <ul class="nav-right">
+                        <li>
+                            {% if request.cookies.get('review_mode') == '1' %}
+                            <a href="/review-mode?on=0" class="btn btn-warning btn-sm">
+                                <i class="bi bi-eye me-1"></i>Review Mode ON
+                            </a>
+                            {% else %}
+                            <a href="/review-mode?on=1" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-eye me-1"></i>Review Mode
+                            </a>
+                            {% endif %}
+                        </li>
+                        <li>
+                            <a href="/tasks/new" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-lg me-1"></i>New Task
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <main class="main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            var toggle = document.getElementById('sidebar-toggle');
+            var backdrop = document.getElementById('sidebar-backdrop');
+
+            function openSidebar() {
+                document.body.classList.add('sidebar-open');
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+
+            function closeSidebar() {
+                document.body.classList.remove('sidebar-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            toggle.addEventListener('click', function () {
+                document.body.classList.contains('sidebar-open') ? closeSidebar() : openSidebar();
+            });
+
+            backdrop.addEventListener('click', closeSidebar);
+        })();
+    </script>
+</body>
+</html>

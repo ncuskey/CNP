@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Add Regulation - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Add Regulation</h1>
+
+<form action="/regulations/create" method="post">
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" name="title" class="form-control" required placeholder="e.g. USDA Record-Keeping Requirements">
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Authority</label>
+                    <select name="authority" class="form-select" required>
+                        {% for a in authorities %}
+                        <option value="{{ a }}">{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Topic</label>
+                    <select name="topic" class="form-select" required>
+                        {% for t in topics %}
+                        <option value="{{ t }}">{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Source URL (optional)</label>
+                <input type="url" name="source_url" class="form-control" placeholder="https://...">
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Effective date (optional)</label>
+                    <input type="text" name="effective_date" class="form-control" placeholder="YYYY-MM-DD">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Review frequency (days)</label>
+                    <input type="number" name="review_frequency_days" class="form-control" value="365" min="1">
+                </div>
+            </div>
+            <div class="mb-0">
+                <label class="form-label">Notes (optional)</label>
+                <textarea name="notes" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a href="/regulations" class="btn btn-outline-secondary">Cancel</a>
+</form>
+{% endblock %}

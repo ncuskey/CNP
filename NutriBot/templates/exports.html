@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}CSV Exports - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">CSV Exports</h1>
+<p>Download tasks, evidence, and retention data as CSV. Use filters below to narrow results.</p>
+
+<form method="get" action="/exports" class="row g-2 mb-3">
+    <div class="col-auto">
+        <label class="form-label">Year</label>
+        <input type="number" class="form-control form-control-sm" name="year" value="{{ year }}" min="2020" max="2035">
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Category</label>
+        <select name="category" class="form-select form-select-sm">
+            <option value="">-- All --</option>
+            {% for c in categories %}
+            <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select form-select-sm">
+            <option value="">-- All --</option>
+            <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="completed" {% if status == 'completed' %}selected{% endif %}>Completed</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Evidence Type</label>
+        <select name="evidence_type" class="form-select form-select-sm">
+            <option value="">-- All --</option>
+            {% for et in evidence_types %}
+            <option value="{{ et }}" {% if et == evidence_type %}selected{% endif %}>{{ et }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm">Apply Filters</button></div>
+</form>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">Downloads</h5></div>
+    <div class="card-body">
+        <p><a href="/exports/tasks.csv?year={{ year }}{% if category %}&category={{ category }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="btn btn-primary btn-sm" download>Tasks CSV</a>
+        <span class="text-muted small">Tasks: task_id, title, category, due_date, status, readiness_score, missing_required_count, missing_supporting_count, has_memo, evidence_count</span></p>
+        <p><a href="/exports/evidence.csv?year={{ year }}{% if category %}&category={{ category }}{% endif %}{% if evidence_type %}&evidence_type={{ evidence_type }}{% endif %}" class="btn btn-primary btn-sm" download>Evidence CSV</a>
+        <span class="text-muted small">Evidence: evidence_id, task_id, task_title, category, evidence_type, importance, original_filename, stored_filename, added_at, keep_until, review_date, disposition</span></p>
+        <p><a href="/exports/retention.csv?year={{ year }}" class="btn btn-primary btn-sm" download>Retention CSV</a>
+        <span class="text-muted small">Retention: review soon + safe to delete items</span></p>
+        <p><a href="/exports/trends.csv?year={{ year }}&baseline={{ year - 1 }}" class="btn btn-primary btn-sm" download>Trends CSV</a>
+        <span class="text-muted small">Trends: category-level comparison (year vs baseline)</span></p>
+        <p><a href="/exports/claims.csv?year={{ year }}" class="btn btn-primary btn-sm" download>Claims CSV</a>
+        <span class="text-muted small">Claims: year, month, reimbursement, free_meals, reduced_meals, paid_meals, breakfast_meals, adp</span></p>
+    </div>
+</div>
+{% endblock %}

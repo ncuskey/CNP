@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Task Templates - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Task Templates</h1>
+<p>Recurring task definitions. <a href="/templates/new" class="btn btn-primary btn-sm">Create new template</a>. Use <a href="/planner">Year Planner</a> to generate tasks for a year.</p>
+<p class="text-muted small"><strong>Recurrence syntax:</strong> ANNUAL:MM-DD (e.g. ANNUAL:10-01), MONTHLY:DD (e.g. MONTHLY:10), ONCE:YYYY-MM-DD, or blank.</p>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Recurrence</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="templates-table">
+                {% for t in templates %}
+                <tr>
+                    <td>{{ t.name }}</td>
+                    <td>{{ t.category }}</td>
+                    <td>{{ t.recurrence_rule or '-' }}</td>
+                    <td><a href="/templates/{{ t.id }}" class="btn btn-sm btn-outline-primary">Edit</a> <a href="/tasks/new?template_id={{ t.id }}" class="btn btn-sm btn-outline-secondary">Create Task</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4">No templates yet. <a href="/templates/new">Create one</a>.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

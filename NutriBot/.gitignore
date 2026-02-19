@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# App data
+data/*.sqlite
+!data/.gitkeep
+
+# Vault (evidence files - user data)
+vault/*
+!vault/.gitkeep
+
+# Backups (runtime-generated SQLite snapshots)
+backups/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

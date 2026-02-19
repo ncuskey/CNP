@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Assistant v2 - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Compliance Assistant v2</h1>
+<p>Guided prompts and free-text queries. Deterministic, local-only.</p>
+
+<div class="mb-3">
+    <strong>Quick queries:</strong>
+    <a href="/assistant-v2?query=due_soon_missing" class="btn btn-outline-primary btn-sm">Due soon + missing evidence</a>
+    <a href="/assistant-v2?query=overdue" class="btn btn-outline-primary btn-sm">Overdue</a>
+    <a href="/assistant-v2?query=missing_required" class="btn btn-outline-primary btn-sm">Missing required evidence</a>
+    <a href="/assistant-v2?query=audit_risk" class="btn btn-outline-primary btn-sm">Audit risk (&lt;60)</a>
+    <a href="/assistant-v2?query=safe_to_delete" class="btn btn-outline-primary btn-sm">Safe to delete</a>
+    <a href="/assistant-v2?query=evidence_recent_30" class="btn btn-outline-primary btn-sm">Evidence (30 days)</a>
+</div>
+
+<form method="get" action="/assistant-v2" class="row g-2 mb-3">
+    <div class="col-auto"><input type="text" class="form-control form-control-sm" name="ask" value="{{ ask }}" placeholder="e.g. what's due soon and missing evidence?" style="min-width:280px;"></div>
+    <div class="col-auto"><input type="number" class="form-control form-control-sm" name="days" value="{{ days }}" min="1" max="365" style="width:4rem;"></div>
+    <div class="col-auto"><select name="category" class="form-select form-select-sm">
+        <option value="">All</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if c == category_filter %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+    </select></div>
+    <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Ask</button></div>
+</form>
+
+{% if query_name %}
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">{{ query_name }}</h5></div>
+    <div class="card-body">
+        {% if results_evidence %}
+        <table class="table table-striped">
+            <thead><tr><th>File</th><th>Type</th><th>Task</th><th>Added</th><th></th></tr></thead>
+            <tbody>
+            {% for e in results_evidence %}
+            <tr>
+                <td>{{ e.original_filename }}</td>
+                <td>{{ get_evidence_types(e)|join(', ') }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}">{{ e.task.template.name if e.task.template else 'Task' }} ({{ e.task.year })</a>{% else %}<em>Task deleted</em>{% endif %}</td>
+                <td>{{ e.added_at.strftime('%Y-%m-%d') if e.added_at else '-' }}</td>
+                <td><a href="/evidence/{{ e.id }}/explain" class="btn btn-sm btn-outline-secondary">Why?</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% elif results %}
+        <table class="table table-striped">
+            <thead><tr><th>Task</th><th>Category</th><th>Due</th><th>Status</th>{% if query == 'audit_risk' %}<th>Score</th>{% endif %}<th></th></tr></thead>
+            <tbody>
+            {% for task in results %}
+            <tr>
+                <td>{% if task.month %}{{ task.template.name if task.template else 'Task' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Task' }}{% endif %}</td>
+                <td>{{ task.template.category if task.template else '-' }}</td>
+                <td>{{ task.due_date or '-' }}</td>
+                <td><span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.status }}</span></td>
+                {% if query == 'audit_risk' %}<td>{{ task.readiness_score|default('-') }}</td>{% endif %}
+                <td><a href="/tasks/{{ task.id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="mb-0">No results match.</p>
+        {% endif %}
+    </div>
+</div>
+{% elif ask %}
+<p class="text-muted">Could not match "{{ ask }}" to a known query. Try: due, overdue, missing evidence, audit risk, delete.</p>
+{% endif %}
+
+<p class="mt-2"><a href="/assistant" class="btn btn-outline-secondary btn-sm">Original Assistant</a> <a href="/today" class="btn btn-outline-secondary btn-sm">Today</a> <a href="/dashboard" class="btn btn-outline-secondary btn-sm">Dashboard</a></p>
+{% endblock %}

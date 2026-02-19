@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Trends - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Trends</h1>
+<p>Cross-year comparison: {{ year }} vs baseline {{ baseline }}</p>
+<form method="get" action="/trends" class="row g-2 mb-3">
+    <div class="col-auto">
+        <label class="form-label">Year</label>
+        <select name="year" class="form-select form-select-sm">
+            {% for yr in years %}
+            <option value="{{ yr }}" {% if yr == year %}selected{% endif %}>{{ yr }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Baseline</label>
+        <select name="baseline" class="form-select form-select-sm">
+            {% for yr in years %}
+            <option value="{{ yr }}" {% if yr == baseline %}selected{% endif %}>{{ yr }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto d-flex align-items-end">
+        <button type="submit" class="btn btn-primary btn-sm me-1">Update</button>
+        <a href="/exports/trends.csv?year={{ year }}&baseline={{ baseline }}" class="btn btn-outline-secondary btn-sm me-1" download>Download CSV</a>
+        <a href="/comparison?year={{ year }}&baseline={{ baseline }}" class="btn btn-outline-secondary btn-sm">Task Comparison</a>
+    </div>
+</form>
+
+<div class="row g-2 mb-3">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <strong>Completion rate</strong><br>{{ summary.completion_rate }}% (baseline {{ summary_baseline.completion_rate }}%)
+                {% if summary_delta.completion_rate_delta is defined %}<br><small class="text-muted">Δ {{ summary_delta.completion_rate_delta }}{% if summary_delta.completion_rate_delta > 0 %}↑{% elif summary_delta.completion_rate_delta < 0 %}↓{% endif %}</small>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <strong>Avg readiness</strong><br>{{ summary.avg_readiness }} (baseline {{ summary_baseline.avg_readiness }})
+                {% if summary_delta.avg_readiness_delta is defined %}<br><small class="text-muted">Δ {{ summary_delta.avg_readiness_delta }}{% if summary_delta.avg_readiness_delta > 0 %}↑{% elif summary_delta.avg_readiness_delta < 0 %}↓{% endif %}</small>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <strong>Missing required %</strong><br>{{ summary.missing_required_pct }}% (baseline {{ summary_baseline.missing_required_pct }}%)
+                {% if summary_delta.missing_required_pct_delta is defined %}<br><small class="text-muted">Δ {{ summary_delta.missing_required_pct_delta }}{% if summary_delta.missing_required_pct_delta < 0 %}↑{% elif summary_delta.missing_required_pct_delta > 0 %}↓{% endif %}</small>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <strong>Memo coverage</strong><br>{{ summary.memo_coverage }}% (baseline {{ summary_baseline.memo_coverage }}%)
+                {% if summary_delta.memo_coverage_delta is defined %}<br><small class="text-muted">Δ {{ summary_delta.memo_coverage_delta }}{% if summary_delta.memo_coverage_delta > 0 %}↑{% elif summary_delta.memo_coverage_delta < 0 %}↓{% endif %}</small>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Retention workload</h5>
+        <p class="mb-0">Review soon: {{ workload.review_soon_count }} | Safe to delete ({{ year }}): {{ workload.safe_to_delete_count }}</p>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">By category</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead><tr><th>Category</th><th>{{ year }} complete</th><th>{{ baseline }} complete</th><th>Δ</th><th>{{ year }} readiness</th><th>{{ baseline }} readiness</th><th>Δ</th></tr></thead>
+            <tbody>
+            {% for c in category_comparison %}
+            <tr>
+                <td>{{ c.category }}</td>
+                <td>{{ c.completion_rate }}%</td>
+                <td>{{ c.baseline_completion_rate }}%</td>
+                <td>{% if c.completion_rate_delta is defined %}{{ c.completion_rate_delta }}{% else %}-{% endif %}</td>
+                <td>{{ c.avg_readiness }}</td>
+                <td>{{ c.baseline_avg_readiness }}</td>
+                <td>{% if c.avg_readiness_delta is defined %}{{ c.avg_readiness_delta }}{% else %}-{% endif %}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">No data</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">By month</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead><tr><th>Month</th><th>{{ year }} tasks</th><th>{{ baseline }} tasks</th><th>{{ year }} complete</th><th>{{ year }} readiness</th><th>Evidence added</th></tr></thead>
+            <tbody>
+            {% for m in month_comparison %}
+            <tr>
+                <td>{{ ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.month] }}</td>
+                <td>{{ m.tasks_due }}</td>
+                <td>{{ m.baseline_tasks_due }}</td>
+                <td>{{ m.completion_rate }}%</td>
+                <td>{{ m.avg_readiness }}</td>
+                <td>{{ m.evidence_added }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No data</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">By template</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead><tr><th>Template</th><th>Category</th><th>Instances</th><th>Completion</th><th>Avg readiness</th><th></th></tr></thead>
+            <tbody>
+            {% for t in template_list %}
+            <tr>
+                <td>{{ t.template_name }}</td>
+                <td>{{ t.category }}</td>
+                <td>{{ t.instance_count }}</td>
+                <td>{{ t.completion_rate }}%</td>
+                <td>{{ t.avg_readiness }}</td>
+                <td><a href="/trends/template/{{ t.template_id }}?year={{ year }}&baseline={{ baseline }}" class="btn btn-sm btn-outline-primary">Trend</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No templates</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

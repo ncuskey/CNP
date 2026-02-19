@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Search - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Search</h1>
+<p>Search across tasks, notes, memos, evidence, and templates.</p>
+<form method="get" action="/search" class="row g-2 mb-3">
+    <div class="col-auto"><input type="search" class="form-control form-control-sm" name="q" value="{{ q }}" placeholder="Search..."></div>
+    <div class="col-auto"><select name="year" class="form-select form-select-sm">
+        <option value="">All</option>
+        {% for y in years %}
+        <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+    </select></div>
+    <div class="col-auto"><select name="category" class="form-select form-select-sm">
+        <option value="">All</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+    </select></div>
+    <div class="col-auto"><select name="entity" class="form-select form-select-sm">
+        <option value="">All</option>
+        <option value="task" {% if entity == 'task' %}selected{% endif %}>Tasks</option>
+        <option value="note" {% if entity == 'note' %}selected{% endif %}>Notes</option>
+        <option value="memo" {% if entity == 'memo' %}selected{% endif %}>Memos</option>
+        <option value="evidence" {% if entity == 'evidence' %}selected{% endif %}>Evidence</option>
+        <option value="template" {% if entity == 'template' %}selected{% endif %}>Templates</option>
+    </select></div>
+    <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Search</button></div>
+</form>
+<p><a href="/search/admin" class="btn btn-outline-secondary btn-sm">Search admin</a> — rebuild index</p>
+
+{% if q %}
+<div class="card mt-3">
+    <div class="card-header"><h5 class="mb-0">Results ({{ results|length }})</h5></div>
+    <div class="card-body">
+        {% if grouped %}
+        {% for et, items in grouped.items() %}
+        <h6>{{ et|capitalize }}</h6>
+        <ul class="list-group list-group-flush mb-3">
+        {% for r in items %}
+        <li class="list-group-item px-0">
+            {% if et in ['task','note','memo','evidence'] and r.task_id %}
+            <a href="/tasks/{{ r.task_id }}">{{ r.title|e or '(no title)' }}</a>
+            {% elif et == 'template' %}
+            <a href="/templates/{{ r.entity_id }}">{{ r.title|e or '(no title)' }}</a>
+            {% else %}
+            <span>{{ r.title|e or '(no title)' }}</span>
+            {% endif %}
+            {% if r.snippet %}<br><small class="text-muted">{{ r.snippet|e }}</small>{% endif %}
+        </li>
+        {% endfor %}
+        </ul>
+        {% endfor %}
+        {% else %}
+        <p class="mb-0">No results.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

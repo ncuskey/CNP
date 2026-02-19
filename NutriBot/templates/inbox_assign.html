@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Assign {{ filename }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Assign to Task</h1>
+<p>File: <strong>{{ filename }}</strong></p>
+<p><a href="/inbox">← Inbox</a></p>
+
+<form action="/inbox/assign" method="post">
+    <input type="hidden" name="filename" value="{{ filename }}">
+    <div>
+        <label for="task_id">Task</label>
+        <select id="task_id" name="task_id" required>
+            <option value="">Select task...</option>
+            {% for t in tasks %}
+            <option value="{{ t.id }}" {% if request.cookies.get('last_task_id') and request.cookies.get('last_task_id')|int == t.id %}selected{% endif %}>{% if t.month %}{{ t.template.name if t.template else 'Task' }} - {{ t.year }}-{{ "%02d"|format(t.month) }}{% else %}{{ t.template.name if t.template else 'Task' }} ({{ t.year }}){% endif %}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label class="d-block">Evidence types (select all that apply)</label>
+        <div class="d-flex flex-wrap gap-2">
+            {% for et in evidence_types %}
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="evidence_types" value="{{ et }}" id="et-{{ loop.index }}">
+                <label class="form-check-label" for="et-{{ loop.index }}">{{ et }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <label for="importance">Importance</label>
+        <select id="importance" name="importance" required>
+            {% for imp in importance_levels %}
+            <option value="{{ imp }}">{{ imp }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="description">Description</label>
+        <input type="text" id="description" name="description">
+    </div>
+    <button type="submit" class="btn">Assign</button>
+</form>
+{% endblock %}

@@ -1,0 +1,75 @@
+:root {
+  /* Modern light theme - soft blue-gray tones */
+  --c-bkg-body: #f0f4f8;
+  --c-bkg-card: #ffffff;
+  --c-bkg-sidebar: #ffffff;
+  --c-bkg-hover: #f8fafc;
+
+  --c-text-base: #1e293b;
+  --c-text-muted: #64748b;
+  --c-text-light: #94a3b8;
+
+  /* Icon colors - modern muted tones */
+  --c-icon: #64748b;
+  --c-icon-hover: #6366f1;
+  --c-icon-active: #4f46e5;
+  --c-icon-muted: #94a3b8;
+
+  /* Modern border with subtle blue tint */
+  --c-border: #e2e8f0;
+  --c-border-light: #f1f5f9;
+
+  /* Refined brand colors - modern indigo */
+  --c-primary: #6366f1;
+  --c-primary-light: #818cf8;
+  --c-primary-dark: #4f46e5;
+  --c-success: #10b981;
+  --c-warning: #f59e0b;
+  --c-danger: #ef4444;
+  --c-info: #0ea5e9;
+
+  /* Modern shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+}
+
+[data-theme="dark"] {
+  /* Modern dark theme - refined dark slate */
+  --c-bkg-body: #0f172a;
+  --c-bkg-card: #1e293b;
+  --c-bkg-sidebar: #1e293b;
+  --c-bkg-hover: #334155;
+
+  --c-text-base: #f1f5f9;
+  --c-text-muted: #94a3b8;
+  --c-text-light: #64748b;
+
+  --c-icon: #94a3b8;
+  --c-icon-hover: #a5b4fc;
+  --c-icon-active: #818cf8;
+  --c-icon-muted: #64748b;
+
+  --c-border: #334155;
+  --c-border-light: #475569;
+
+  --c-primary: #818cf8;
+  --c-primary-light: #a5b4fc;
+  --c-primary-dark: #6366f1;
+  --c-success: #34d399;
+  --c-warning: #fbbf24;
+  --c-danger: #f87171;
+  --c-info: #38bdf8;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+}

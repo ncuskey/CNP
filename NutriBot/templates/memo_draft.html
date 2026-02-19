@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Draft Compliance Memo — {{ task.template.name if task.template else 'Task' }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Draft Compliance Memo</h1>
+<p><a href="/tasks/{{ task.id }}">← Back to Task</a></p>
+<p style="font-size:0.9rem;">Generated from checklist, notes, and evidence. Edit below and click "Save to Memo" to populate the Compliance Memo form.</p>
+
+<form action="/tasks/{{ task.id }}/memo/draft/save" method="post">
+    <div>
+        <label for="date">Date</label>
+        <input type="date" id="date" name="date" value="{{ draft.date }}">
+    </div>
+    <div>
+        <label for="context">Context</label>
+        <textarea id="context" name="context" rows="4">{{ draft.context }}</textarea>
+    </div>
+    <div>
+        <label for="actions_taken">Actions Taken</label>
+        <textarea id="actions_taken" name="actions_taken" rows="8">{{ draft.actions_taken }}</textarea>
+    </div>
+    <div>
+        <label for="decision">Decision / Outcome</label>
+        <textarea id="decision" name="decision" rows="3">{{ draft.decision }}</textarea>
+    </div>
+    <div>
+        <label for="risks">Risks / Follow-ups</label>
+        <textarea id="risks" name="risks" rows="4">{{ draft.risks }}</textarea>
+    </div>
+    <button type="submit" class="btn">Save to Memo</button>
+</form>
+
+<p><a href="/tasks/{{ task.id }}/memo/draft?include_more=true">Include more detail</a> (longer notes)</p>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Evidence Library - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Evidence Library</h1>
+<p><a href="/search?entity=evidence" class="btn btn-outline-primary btn-sm">Search evidence (full-text)</a></p>
+<form method="get" action="/evidence" class="row g-2 mb-3">
+    <div class="col-auto"><input type="text" class="form-control form-control-sm" name="search" value="{{ search or '' }}" placeholder="Search filename/description"></div>
+    <div class="col-auto"><select name="category" class="form-select form-select-sm">
+        <option value="">All categories</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if c == category_filter %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+    </select></div>
+    <div class="col-auto"><select name="evidence_type" class="form-select form-select-sm">
+        <option value="">All types</option>
+        {% for et in evidence_types %}
+        <option value="{{ et }}" {% if et == evidence_type_filter %}selected{% endif %}>{{ et }}</option>
+        {% endfor %}
+    </select></div>
+    <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Search</button></div>
+</form>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th>File</th><th>Type</th><th>Importance</th><th>Task</th><th>Added</th><th></th></tr></thead>
+            <tbody>
+            {% for e in items %}
+            <tr>
+                <td><a href="/vault/{{ e.file_path }}" target="_blank">{{ e.original_filename }}</a></td>
+                <td>{{ get_evidence_types(e)|join(', ') }}</td>
+                <td>{{ e.importance }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}">{{ e.task.template.name if e.task.template else 'Task' }} ({{ e.task.year }})</a>{% else %}<em>Task deleted</em>{% endif %}</td>
+                <td>{{ e.added_at.strftime('%Y-%m-%d') }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}" class="btn btn-sm btn-outline-primary">View</a>{% endif %} <a href="/evidence/{{ e.id }}/explain" class="btn btn-sm btn-outline-secondary">Why?</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No evidence.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

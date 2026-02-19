@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Comparison {{ year }} vs {{ baseline }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Year Comparison — {{ year }} vs {{ baseline }}</h1>
+<p>Task-by-task side-by-side: completion date, notes, checklist %, evidence count.</p>
+<form method="get" action="/comparison" class="row g-2 mb-3">
+    <div class="col-auto">
+        <label class="form-label">Year</label>
+        <select name="year" class="form-select form-select-sm">
+            {% for yr in years %}
+            <option value="{{ yr }}" {% if yr == year %}selected{% endif %}>{{ yr }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Baseline</label>
+        <select name="baseline" class="form-select form-select-sm">
+            {% for yr in years %}
+            <option value="{{ yr }}" {% if yr == baseline %}selected{% endif %}>{{ yr }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto d-flex align-items-end">
+        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+    </div>
+</form>
+<p><a href="/trends?year={{ year }}&baseline={{ baseline }}" class="btn btn-outline-primary btn-sm">View Trends</a></p>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">Task Pairs ({{ year }} | {{ baseline }})</h5></div>
+    <div class="card-body p-0 overflow-auto">
+        <table class="table table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>{{ year }} Status</th>
+                    <th>{{ year }} Completed</th>
+                    <th>{{ year }} Checklist</th>
+                    <th>{{ year }} Evidence</th>
+                    <th>{{ baseline }} Status</th>
+                    <th>{{ baseline }} Completed</th>
+                    <th>{{ baseline }} Checklist</th>
+                    <th>{{ baseline }} Evidence</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in pairs %}
+            <tr>
+                <td>
+                    <a href="/tasks/{{ p.current_task.id }}">{{ p.current_record.title }}</a>
+                    <br><small><a href="/tasks/{{ p.baseline_task.id }}">({{ baseline }})</a></small>
+                </td>
+                <td><span class="badge bg-{% if p.current_record.status == 'completed' %}success{% elif p.current_record.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ p.current_record.status }}</span></td>
+                <td>{{ p.current_record.completion_date or '-' }}</td>
+                <td>{{ p.current_record.checklist_pct }}%</td>
+                <td>{{ p.current_record.evidence_count }}</td>
+                <td><span class="badge bg-{% if p.baseline_record.status == 'completed' %}success{% elif p.baseline_record.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ p.baseline_record.status }}</span></td>
+                <td>{{ p.baseline_record.completion_date or '-' }}</td>
+                <td>{{ p.baseline_record.checklist_pct }}%</td>
+                <td>{{ p.baseline_record.evidence_count }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9">No matching task pairs for {{ year }} vs {{ baseline }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

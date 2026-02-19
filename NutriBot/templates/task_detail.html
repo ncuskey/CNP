@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% block title %}{% if task.month %}{{ task.template.name if task.template else 'Task' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Task' }} ({{ task.year }}){% endif %} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">{% if task.month %}{{ task.template.name if task.template else 'Task' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Task' }} ({{ task.year }}){% endif %}</h1>
+
+<!-- Anchor navigation -->
+<nav class="mb-3 d-flex flex-wrap gap-2 small" aria-label="Page sections">
+    <a href="#section-edit" class="btn btn-outline-secondary btn-sm">Edit</a>
+    {% if data_fields %}<a href="#section-data" class="btn btn-outline-secondary btn-sm">Data</a>{% endif %}
+    <a href="#section-checklist" class="btn btn-outline-secondary btn-sm">Checklist</a>
+    <a href="#section-notes" class="btn btn-outline-secondary btn-sm">Notes</a>
+    <a href="#section-guidance" class="btn btn-outline-secondary btn-sm">Guidance</a>
+    <a href="#section-evidence" class="btn btn-outline-secondary btn-sm">Evidence</a>
+    <a href="#section-export" class="btn btn-outline-secondary btn-sm">Export</a>
+</nav>
+
+{% if request.cookies.get('review_mode') == '1' and (missing_required > 0 or not export_ready) %}
+<div class="alert alert-warning" role="alert">
+    <strong>Review Mode:</strong> {% if missing_required > 0 %}Missing required evidence.{% endif %} {% if not export_ready %}Incomplete for audit packet.{% endif %}
+</div>
+{% endif %}
+
+<p><strong>Export:</strong> {% if export_ready %}Export Ready{% else %}Incomplete for audit packet{% endif %}</p>
+<p>
+    <a href="/today" class="btn btn-sm btn-outline-secondary">← Today</a>
+    {% if task.template %}
+    <a href="/assistant?query=last_year&template_id={{ task.template_id }}" class="btn btn-sm btn-outline-secondary">Last year's tasks for this template</a>
+    <a href="/search?q={{ (task.template.name or '')|urlencode }}&category={{ (task.template.category or '')|urlencode }}" class="btn btn-sm btn-outline-secondary">Search related</a>
+    {% endif %}
+</p>
+
+{% if request.query_params.get('copied') == '1' %}
+<div class="alert alert-success" role="alert">Checklist and notes copied from last year.</div>
+{% endif %}
+{% if request.query_params.get('saved') == '1' %}
+<div class="alert alert-success" role="alert">Data saved.</div>
+{% endif %}
+{% if request.query_params.get('extracted') == '1' %}
+<div class="alert alert-success" role="alert">Claim data extracted from PDF. Review and save if needed.</div>
+{% endif %}
+
+{% if last_year_task and last_year_metrics %}
+<div class="card mb-3">
+    <div class="card-body">
+        <strong>Last year comparison ({{ task.year - 1 }})</strong>: Readiness {{ last_year_metrics.readiness }}/100, {{ last_year_metrics.evidence_count }} evidence, memo {% if last_year_metrics.has_memo %}yes{% else %}no{% endif %}
+        {% if last_year_metrics.missing_types %} | Missing: {% for et, imp in last_year_metrics.missing_types %}{{ et }} ({{ imp }}){% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+        | <a href="/tasks/{{ last_year_task.id }}">Open last year task</a>
+        <form action="/tasks/{{ task.id }}/copy-from-last-year" method="post" class="d-inline ms-2">
+            <button type="submit" class="btn btn-primary btn-sm">Copy checklist and notes from last year</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Edit task form -->
+<div class="card mb-3" id="section-edit">
+    <div class="card-header"><h5 class="mb-0">Edit Task</h5></div>
+    <div class="card-body">
+        <form action="/tasks/{{ task.id }}/update" method="post">
+            <div class="mb-3">
+                <label for="due_date" class="form-label">Due Date</label>
+                <input type="date" class="form-control" id="due_date" name="due_date" value="{{ task.due_date or '' }}">
+            </div>
+            <div class="mb-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="completion_date" class="form-label">Completion Date</label>
+                <input type="date" class="form-control" id="completion_date" name="completion_date" value="{{ task.completion_date or '' }}">
+                <small class="text-muted">(set when completed)</small>
+            </div>
+            <div class="mb-3">
+                <label for="notes" class="form-label">Notes</label>
+                <textarea class="form-control" id="notes" name="notes" rows="3">{{ task.notes }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+
+{% if data_fields %}
+<!-- Structured Data -->
+<div class="card mb-3" id="section-data">
+    <div class="card-header"><h5 class="mb-0">Structured Data</h5></div>
+    <div class="card-body">
+        <form action="/tasks/{{ task.id }}/data/save" method="post">
+            <div class="row g-2">
+            {% for f in data_fields %}
+                <div class="col-md-6">
+                    {% if f.data_type == 'bool' %}
+                    <div class="form-check mt-2">
+                        <input type="checkbox" class="form-check-input" id="data_{{ f.field_key }}" name="{{ f.field_key }}" value="1" {% if task_values.get(f.field_key) in ('1','true','yes') %}checked{% endif %}>
+                        <label class="form-check-label" for="data_{{ f.field_key }}">{{ f.label }}</label>
+                    </div>
+                    {% else %}
+                    <label for="data_{{ f.field_key }}" class="form-label">{{ f.label }}</label>
+                    {% if f.data_type == 'int' %}
+                    <input type="number" class="form-control" id="data_{{ f.field_key }}" name="{{ f.field_key }}" value="{{ task_values.get(f.field_key, '') }}" step="1">
+                    {% elif f.data_type == 'float' or f.data_type == 'currency' %}
+                    <input type="number" class="form-control" id="data_{{ f.field_key }}" name="{{ f.field_key }}" value="{{ task_values.get(f.field_key, '') }}" step="0.01">
+                    {% elif f.data_type == 'date' %}
+                    <input type="date" class="form-control" id="data_{{ f.field_key }}" name="{{ f.field_key }}" value="{{ task_values.get(f.field_key, '') }}">
+                    {% else %}
+                    <input type="text" class="form-control" id="data_{{ f.field_key }}" name="{{ f.field_key }}" value="{{ task_values.get(f.field_key, '') }}">
+                    {% endif %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">Save Data</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Checklist -->
+<div class="card mb-3" id="section-checklist">
+    <div class="card-header"><h5 class="mb-0">Checklist</h5></div>
+    <div class="card-body">
+        <div id="checklist-container" class="list-group list-group-flush mb-2">
+            {% for item in checklist %}
+            {% include "checklist_item.html" %}
+            {% else %}
+            <p id="checklist-empty" class="text-muted mb-0">No checklist items yet.</p>
+            {% endfor %}
+        </div>
+        <form action="/tasks/{{ task.id }}/checklist" method="post"
+              hx-post="/tasks/{{ task.id }}/checklist"
+              hx-target="#checklist-container"
+              hx-swap="beforeend"
+              hx-on::after-request="this.reset(); document.getElementById('checklist-empty')?.remove()"
+              class="d-flex gap-2">
+            <input type="text" class="form-control" name="text" placeholder="Add checklist item" required>
+            <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+    </div>
+</div>
+
+<!-- Notes log -->
+<div class="card mb-3" id="section-notes">
+    <div class="card-header"><h5 class="mb-0">Notes</h5></div>
+    <div class="card-body">
+        <div id="notes-container" class="notes-log mb-2">
+            {% for note in notes %}
+            {% include "note_item.html" %}
+            {% else %}
+            <p id="notes-empty" class="text-muted mb-0">No notes yet.</p>
+            {% endfor %}
+        </div>
+        <form action="/tasks/{{ task.id }}/notes" method="post"
+              hx-post="/tasks/{{ task.id }}/notes"
+              hx-target="#notes-container"
+              hx-swap="afterbegin"
+              hx-on::after-request="this.reset(); document.getElementById('notes-empty')?.remove()">
+            <textarea class="form-control mb-2" name="content" rows="2" placeholder="Add a note..." required></textarea>
+            <button type="submit" class="btn btn-primary">Add Note</button>
+        </form>
+    </div>
+</div>
+
+<!-- Guidance -->
+<div class="card mb-3" id="section-guidance">
+    <div class="card-header"><h5 class="mb-0">Guidance</h5></div>
+    <div class="card-body">
+        <p><strong>Audit readiness:</strong> {{ readiness.score }}/100</p>
+        {% if readiness.reasons %}
+        <ul class="small mb-2">
+        {% for r in readiness.reasons %}
+        <li>{{ r }}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {% if missing_types %}
+        <p><strong>Attach next:</strong> {% for et, imp in missing_types %}{{ et }} ({{ imp }}){% if not loop.last %}, {% endif %}{% endfor %}</p>
+        {% endif %}
+        <p><strong>Suggested next steps:</strong></p>
+        <ul>
+        {% for step in next_steps %}
+        <li>{{ step }}</li>
+        {% endfor %}
+        </ul>
+        <a href="/tasks/{{ task.id }}/memo/draft" class="btn btn-primary">Draft Compliance Memo</a>
+    </div>
+</div>
+
+<!-- Generate Documents -->
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Generate Documents</h5>
+        <a href="/tasks/{{ task.id }}/docs" class="btn btn-primary">Generate Docs</a>
+        <span class="text-muted">— Cover Sheet, Compliance Memo, Evidence Index</span>
+    </div>
+</div>
+
+<!-- Evidence -->
+<div class="card mb-3" id="section-evidence">
+    <div class="card-header"><h5 class="mb-0">Evidence</h5></div>
+    <div class="card-body">
+        {% if missing_required > 0 or missing_supporting > 0 %}
+        <p class="text-warning"><strong>Missing:</strong> {{ missing_required }} required, {{ missing_supporting }} supporting</p>
+        {% endif %}
+        <ul class="list-group list-group-flush mb-3">
+        {% for e in evidence %}
+        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span>
+                <a href="/vault/{{ e.file_path }}" target="_blank">{{ e.original_filename }}</a>
+                ({{ get_evidence_types(e)|join(', ') }}, {{ e.importance }})
+                {% if e.keep_until %} | Keep until {{ e.keep_until }}{% endif %}
+                {% if e.review_date %} | Review {{ e.review_date }}{% endif %}
+            </span>
+            <span class="d-flex gap-1">
+                {% if data_fields and e.original_filename and (e.original_filename|lower)[-4:] == '.pdf' %}
+                <form action="/tasks/{{ task.id }}/evidence/extract" method="post" class="d-inline">
+                    <input type="hidden" name="evidence_item_id" value="{{ e.id }}">
+                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Extract meal counts, reimbursement, etc. into claim data">Extract</button>
+                </form>
+                {% endif %}
+                <form action="/evidence/{{ e.id }}/delete" method="post" class="d-inline" onsubmit="return confirm('Remove evidence? File moves to trash.');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
+            </span>
+        </li>
+        {% else %}
+        <li class="list-group-item px-0">No evidence yet.</li>
+        {% endfor %}
+        </ul>
+        <!-- Upload: shared type/importance fields, toggle between single and bulk -->
+        <div class="mb-3">
+            <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Upload mode">
+                <button type="button" class="btn btn-outline-secondary active" id="upload-tab-single" onclick="showUploadTab('single')">Single file</button>
+                <button type="button" class="btn btn-outline-secondary" id="upload-tab-bulk" onclick="showUploadTab('bulk')">Multiple files</button>
+            </div>
+
+            <!-- Shared fields -->
+            <div class="mb-2">
+                <label class="form-label small d-block">Evidence types (select all that apply):</label>
+                <div class="d-flex flex-wrap gap-2" id="shared-evidence-types">
+                    {% for et in evidence_types %}
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" value="{{ et }}" id="et-shared-{{ loop.index }}" name="evidence_types_shared">
+                        <label class="form-check-label small" for="et-shared-{{ loop.index }}">{{ et }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-auto">
+                    <select class="form-select form-select-sm" id="shared-importance">
+                        {% for imp in importance_levels %}<option value="{{ imp }}">{{ imp }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <input type="text" class="form-control form-control-sm" id="shared-description" placeholder="Description">
+                </div>
+            </div>
+
+            <!-- Single file form -->
+            <form id="upload-form-single" action="/tasks/{{ task.id }}/evidence" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2" onsubmit="syncSharedFields(this)">
+                <input type="hidden" name="importance">
+                <input type="hidden" name="description">
+                <input type="hidden" name="category_override">
+                <input type="file" class="form-control form-control-sm" name="file" style="max-width:260px" required>
+                <input type="text" class="form-control form-control-sm" name="category_override_visible" placeholder="Category override (optional)" style="max-width:180px"
+                       oninput="this.form.querySelector('[name=category_override]').value=this.value">
+                <button type="submit" class="btn btn-primary btn-sm">Attach</button>
+            </form>
+
+            <!-- Bulk form (hidden by default) -->
+            <form id="upload-form-bulk" action="/tasks/{{ task.id }}/evidence/upload-bulk" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2 d-none" onsubmit="syncSharedFields(this)">
+                <input type="hidden" name="importance">
+                <input type="hidden" name="description">
+                <input type="file" class="form-control form-control-sm" name="files" multiple style="max-width:260px" required>
+                <button type="submit" class="btn btn-primary btn-sm">Attach All</button>
+            </form>
+        </div>
+        <script>
+        function showUploadTab(mode) {
+            document.getElementById('upload-form-single').classList.toggle('d-none', mode !== 'single');
+            document.getElementById('upload-form-bulk').classList.toggle('d-none', mode !== 'bulk');
+            document.getElementById('upload-tab-single').classList.toggle('active', mode === 'single');
+            document.getElementById('upload-tab-bulk').classList.toggle('active', mode === 'bulk');
+        }
+        function syncSharedFields(form) {
+            var types = Array.from(document.querySelectorAll('#shared-evidence-types input:checked')).map(function(c){return c.value;});
+            types.forEach(function(t) {
+                var h = document.createElement('input');
+                h.type = 'hidden'; h.name = 'evidence_types'; h.value = t;
+                form.appendChild(h);
+            });
+            form.querySelector('[name=importance]').value = document.getElementById('shared-importance').value;
+            form.querySelector('[name=description]').value = document.getElementById('shared-description').value;
+        }
+        </script>
+    </div>
+</div>
+
+<!-- Export -->
+<div class="card" id="section-export">
+    <div class="card-header"><h5 class="mb-0">Export</h5></div>
+    <div class="card-body">
+        <form action="/tasks/{{ task.id }}/export" method="post">
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="include_nice_to_have" value="true" id="inc_nice">
+                <label class="form-check-label" for="inc_nice">Include nice-to-have evidence</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="include_generated" value="true" id="inc_gen">
+                <label class="form-check-label" for="inc_gen">Include generated documents</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Export Audit Packet</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

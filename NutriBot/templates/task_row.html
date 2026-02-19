@@ -1,0 +1,8 @@
+<tr>
+    <td>{{ task.template.name if task.template else 'Unknown' }}</td>
+    <td>{{ task.template.category if task.template else '-' }}</td>
+    <td>{{ task.year }}</td>
+    <td>{{ task.due_date or '-' }}</td>
+    <td class="status-{{ task.status }}">{{ task.status }}</td>
+    <td><a href="/tasks/{{ task.id }}">View</a></td>
+</tr>
