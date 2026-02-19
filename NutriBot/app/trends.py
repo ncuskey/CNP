@@ -31,10 +31,15 @@ def compute_task_metrics(db: Session, task: TaskInstance) -> dict[str, Any]:
 
 
 def _tasks_for_year(db: Session, year: int) -> list[TaskInstance]:
-    """Get all tasks for a year with templates attached."""
+    """Get all tasks for a year with templates attached (single batch query for templates)."""
     tasks = list(db.exec(select(TaskInstance).where(TaskInstance.year == year)).all())
+    template_ids = {t.template_id for t in tasks}
+    if template_ids:
+        tpl_map = {tpl.id: tpl for tpl in db.exec(select(TaskTemplate).where(TaskTemplate.id.in_(template_ids))).all()}
+    else:
+        tpl_map = {}
     for t in tasks:
-        t.template = db.get(TaskTemplate, t.template_id)
+        t.template = tpl_map.get(t.template_id)
     return tasks
 
 

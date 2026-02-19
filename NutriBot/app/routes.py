@@ -840,10 +840,17 @@ def today_page(
     recent_evidence = list(db.exec(
         select(EvidenceItem).where(EvidenceItem.added_at >= cutoff).order_by(EvidenceItem.added_at.desc())
     ).all())
+    _ev_task_ids = {e.task_id for e in recent_evidence}
+    if _ev_task_ids:
+        _ev_task_map = {t.id: t for t in db.exec(select(TaskInstance).where(TaskInstance.id.in_(_ev_task_ids))).all()}
+        _ev_tpl_ids = {t.template_id for t in _ev_task_map.values()}
+        _ev_tpl_map = {tpl.id: tpl for tpl in db.exec(select(TaskTemplate).where(TaskTemplate.id.in_(_ev_tpl_ids))).all()} if _ev_tpl_ids else {}
+        for t in _ev_task_map.values():
+            object.__setattr__(t, "template", _ev_tpl_map.get(t.template_id))
+    else:
+        _ev_task_map = {}
     for e in recent_evidence:
-        e.task = db.get(TaskInstance, e.task_id)
-        if e.task:
-            object.__setattr__(e.task, "template", db.get(TaskTemplate, e.task.template_id))
+        e.task = _ev_task_map.get(e.task_id)
     recent_evidence = [e for e in recent_evidence if e.task]
 
     tasks_for_quick = list(db.exec(

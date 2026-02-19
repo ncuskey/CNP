@@ -70,6 +70,10 @@ def _norm_num(s: str) -> str:
     return s.replace(",", "").strip()
 
 
+_MAX_OCR_TEXT_CHARS = 50_000
+_MAX_CLAIM_AMOUNT = 1_000_000_000  # $1 billion upper bound for sanity checks
+
+
 def parse_claim_text(text: str) -> dict[str, Any]:
     """
     Parse extracted text into claim field values.
@@ -78,6 +82,8 @@ def parse_claim_text(text: str) -> dict[str, Any]:
     """
     if not text:
         return {}
+    # Limit text length before running regexes to prevent ReDoS on pathological input
+    text = text[:_MAX_OCR_TEXT_CHARS]
 
     result: dict[str, Any] = {}
     text_lower = text.lower()
@@ -94,8 +100,10 @@ def parse_claim_text(text: str) -> dict[str, Any]:
         if m:
             val = _norm_num(m.group(1))
             try:
-                result["total_reimbursement"] = str(round(float(val), 2))
-                break
+                val_f = float(val)
+                if 0 <= val_f <= _MAX_CLAIM_AMOUNT:
+                    result["total_reimbursement"] = str(round(val_f, 2))
+                    break
             except ValueError:
                 pass
 
@@ -169,8 +177,10 @@ def parse_claim_text(text: str) -> dict[str, Any]:
             if m:
                 val = _norm_num(m.group(1))
                 try:
-                    result["total_reimbursement"] = str(round(float(val), 2))
-                    break
+                    val_f = float(val)
+                    if 0 <= val_f <= _MAX_CLAIM_AMOUNT:
+                        result["total_reimbursement"] = str(round(val_f, 2))
+                        break
                 except ValueError:
                     pass
 

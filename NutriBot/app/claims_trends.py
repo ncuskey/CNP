@@ -41,7 +41,8 @@ def get_monthly_claim_data(db: Session, year: int) -> list[dict[str, Any]]:
 
         def _float(k: str) -> float:
             try:
-                return float(v.get(k) or 0)
+                v_f = float(v.get(k) or 0)
+                return v_f if 0 <= v_f <= 1_000_000_000 else 0.0
             except (ValueError, TypeError):
                 return 0.0
 
