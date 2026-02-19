@@ -4,6 +4,28 @@ import io
 import os
 from typing import Optional
 
+# Google Workspace MIME types cannot be downloaded directly; they must be
+# exported to a portable format. This map defines the export target and the
+# file extension to append to the downloaded file.
+WORKSPACE_EXPORT_FORMATS: dict[str, tuple[str, str]] = {
+    "application/vnd.google-apps.document": (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".docx",
+    ),
+    "application/vnd.google-apps.spreadsheet": (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ".xlsx",
+    ),
+    "application/vnd.google-apps.presentation": (
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ".pptx",
+    ),
+    "application/vnd.google-apps.drawing": ("image/png", ".png"),
+    "application/vnd.google-apps.script": ("application/vnd.google-apps.script+json", ".json"),
+}
+
+FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
+
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -29,6 +51,7 @@ class GoogleDriveClient:
         files = client.list_files()
         content = client.download_file(file_id="<id>")
         client.upload_file(local_path="report.pdf", name="report.pdf")
+        client.clone_folder(folder_id="<id>", dest="local/path")
     """
 
     def __init__(
@@ -239,3 +262,92 @@ class GoogleDriveClient:
             .execute()
         )
         return file
+
+    # ------------------------------------------------------------------
+    # Clone folder
+    # ------------------------------------------------------------------
+
+    def clone_folder(self, folder_id: str, dest: str) -> None:
+        """Recursively download a Google Drive folder into a local directory.
+
+        The local directory tree mirrors the Drive folder structure exactly.
+        Google Workspace files (Docs, Sheets, Slides, etc.) are exported to
+        their Office-compatible equivalents and saved with an appropriate
+        extension. Files that cannot be exported are skipped with a warning.
+
+        Args:
+            folder_id: The Drive ID of the folder to clone.
+            dest: Local directory path where the folder contents will be
+                written. Created if it does not exist.
+        """
+        os.makedirs(dest, exist_ok=True)
+        self._clone_folder_recursive(folder_id, dest)
+
+    def _clone_folder_recursive(self, folder_id: str, local_dir: str) -> None:
+        """Walk a Drive folder and write its contents into *local_dir*."""
+        items = self._list_folder_children(folder_id)
+        for item in items:
+            mime = item["mimeType"]
+            name = item["name"]
+            item_id = item["id"]
+
+            if mime == FOLDER_MIME_TYPE:
+                sub_dir = os.path.join(local_dir, name)
+                os.makedirs(sub_dir, exist_ok=True)
+                self._clone_folder_recursive(item_id, sub_dir)
+            else:
+                self._save_file(item_id, name, mime, local_dir)
+
+    def _list_folder_children(self, folder_id: str) -> list[dict]:
+        """Return all direct children of a Drive folder, auto-paginating."""
+        results = []
+        page_token: Optional[str] = None
+        query = f"'{folder_id}' in parents and trashed = false"
+
+        while True:
+            kwargs: dict = {
+                "q": query,
+                "pageSize": 100,
+                "fields": "nextPageToken, files(id, name, mimeType)",
+                "supportsAllDrives": True,
+                "includeItemsFromAllDrives": True,
+            }
+            if page_token:
+                kwargs["pageToken"] = page_token
+
+            response = self._service.files().list(**kwargs).execute()
+            results.extend(response.get("files", []))
+            page_token = response.get("nextPageToken")
+            if not page_token:
+                break
+
+        return results
+
+    def _save_file(
+        self, file_id: str, name: str, mime: str, local_dir: str
+    ) -> None:
+        """Download or export a single Drive file into *local_dir*."""
+        if mime in WORKSPACE_EXPORT_FORMATS:
+            export_mime, ext = WORKSPACE_EXPORT_FORMATS[mime]
+            local_name = name if name.endswith(ext) else name + ext
+            local_path = os.path.join(local_dir, local_name)
+            try:
+                content = self.export_file(file_id, export_mime)
+            except Exception as exc:  # noqa: BLE001
+                print(f"Warning: could not export '{name}' ({mime}): {exc}")
+                return
+        elif mime.startswith("application/vnd.google-apps."):
+            # Unknown Workspace type with no export mapping — skip.
+            print(f"Warning: skipping unsupported Workspace file '{name}' ({mime})")
+            return
+        else:
+            local_path = os.path.join(local_dir, name)
+            try:
+                content = self.download_file(file_id)
+            except Exception as exc:  # noqa: BLE001
+                print(f"Warning: could not download '{name}': {exc}")
+                return
+
+        with open(local_path, "wb") as fh:
+            fh.write(content)
+        print(f"  {local_path}")
