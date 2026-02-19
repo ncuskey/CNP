@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}History - {{ year }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Execution Records — {{ year }}</h1>
+<p>Per-year execution records: completion date, notes, checklist %, evidence count.</p>
+<form method="get" action="/history" class="row g-2 mb-3">
+    <div class="col-auto">
+        <label class="form-label">Year</label>
+        <select name="year" class="form-select form-select-sm">
+            {% for yr in years %}
+            <option value="{{ yr }}" {% if yr == year %}selected{% endif %}>{{ yr }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto d-flex align-items-end">
+        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">Tasks by Category</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th>Task</th><th>Category</th><th>Due</th><th>Status</th><th>Completed</th><th>Checklist</th><th>Evidence</th><th>Notes</th></tr></thead>
+            <tbody>
+            {% for r in records %}
+            <tr>
+                <td><a href="/tasks/{{ r.task_id }}">{{ r.title }}</a></td>
+                <td>{{ r.category }}</td>
+                <td>{{ r.due_date or '-' }}</td>
+                <td><span class="badge bg-{% if r.status == 'completed' %}success{% elif r.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ r.status }}</span></td>
+                <td>{{ r.completion_date or '-' }}</td>
+                <td>{{ r.checklist_pct }}%</td>
+                <td>{{ r.evidence_count }}</td>
+                <td>{{ r.notes_preview or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8">No tasks for {{ year }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="mt-2"><a href="/comparison?year={{ year }}&baseline={{ year - 1 }}" class="btn btn-outline-primary btn-sm">Compare to {{ year - 1 }}</a></p>
+{% endblock %}

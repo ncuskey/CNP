@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Claims - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Claims Dashboard</h1>
+<p><a href="/today" class="btn btn-outline-secondary btn-sm">← Today</a> <a href="/exports/claims.csv?year={{ year }}" class="btn btn-outline-primary btn-sm">Export CSV</a></p>
+
+<form method="get" class="d-inline">
+    <select name="year" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+        {% for yy in [year-2, year-1, year, year+1] %}
+        <option value="{{ yy }}" {% if yy == year %}selected{% endif %}>{{ yy }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+<!-- Quick Stats -->
+<div class="row g-2 mb-3">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-2">
+                <strong>YTD Reimbursement</strong><br>{{ "${:,.2f}".format(metrics.total_reimbursement) }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-2">
+                <strong>Avg $/Meal</strong><br>{{ "${:.2f}".format(metrics.reimbursement_per_meal) }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-2">
+                <strong>Total Meals</strong><br>{{ "{:,}".format(metrics.total_meals) }}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body py-2">
+                <strong>vs Last Year</strong><br>
+                {% if comparison.reimbursement_pct >= 0 %}+{% endif %}{{ comparison.reimbursement_pct }}% reimb, {% if comparison.meals_pct >= 0 %}+{% endif %}{{ comparison.meals_pct }}% meals
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Reimbursement Table -->
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Monthly Reimbursement</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead><tr><th>Month</th><th>Reimbursement</th><th>Meals</th><th>Trend vs Last Year</th></tr></thead>
+            <tbody>
+                {% for d in data %}
+                <tr>
+                    <td>{{ d.month or '-' }}</td>
+                    <td>{{ "${:,.2f}".format(d.reimbursement) }}</td>
+                    <td>{{ "{:,}".format(d.total_meals) }}</td>
+                    <td>
+                        {% set last = last_by_month.get(d.month) %}
+                        {% if last and last.reimbursement %}
+                            {% set pct = ((d.reimbursement - last.reimbursement) / last.reimbursement * 100) if last.reimbursement else 0 %}
+                            {% if pct >= 0 %}+{% endif %}{{ "%.1f"|format(pct) }}%
+                        {% else %}-{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4">No claim data for {{ year }}. Enter data on Monthly Claim tasks.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Participation Table -->
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Participation</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead><tr><th>Month</th><th>Total Meals</th><th>ADP</th></tr></thead>
+            <tbody>
+                {% for d in data %}
+                <tr>
+                    <td>{{ d.month or '-' }}</td>
+                    <td>{{ "{:,}".format(d.total_meals) }}</td>
+                    <td>{{ d.adp or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3">No data.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

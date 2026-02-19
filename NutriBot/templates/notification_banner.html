@@ -1,0 +1,26 @@
+{% if notifications and (notifications.critical_count > 0 or notifications.retention_safe_count > 0 or notifications.retention_review_count > 0) %}
+<div id="notification-banner" class="alert alert-warning alert-dismissible fade show" role="alert">
+    {% if notifications.critical_count > 0 %}
+    <p class="mb-1"><strong>{{ notifications.critical_count }} critical issue(s):</strong>
+        {% if notifications.overdue %} {{ notifications.overdue|length }} overdue{% endif %}
+        {% if notifications.missing_required %} | {{ notifications.missing_required|length }} missing required evidence{% endif %}
+        {% if notifications.readiness_low %} | {{ notifications.readiness_low|length }} low readiness (&lt;60){% endif %}
+    </p>
+    {% endif %}
+    {% if notifications.retention_safe_count > 0 or notifications.retention_review_count > 0 %}
+    <p class="mb-1"><strong>Retention:</strong>
+        {% if notifications.retention_safe_count > 0 %}{{ notifications.retention_safe_count }} safe to delete{% endif %}
+        {% if notifications.retention_review_count > 0 %} | {{ notifications.retention_review_count }} need review within 30 days{% endif %}
+        — <a href="/retention">→ Retention</a>
+    </p>
+    {% endif %}
+    <a href="/review" class="btn btn-warning btn-sm">Review Prep</a>
+    <button type="button" class="btn-close" onclick="document.getElementById('notification-banner').style.display='none'; sessionStorage.setItem('notifications_dismissed','1');" aria-label="Dismiss"></button>
+</div>
+<script>
+if (sessionStorage.getItem('notifications_dismissed') === '1') {
+    var b = document.getElementById('notification-banner');
+    if (b) b.style.display = 'none';
+}
+</script>
+{% endif %}

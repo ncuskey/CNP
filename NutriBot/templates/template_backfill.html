@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Backfill Data - {{ template.name }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Backfill Data: {{ template.name }}</h1>
+<p><a href="/templates/{{ template.id }}" class="btn btn-outline-secondary btn-sm">← Template</a> Year: {{ year }}</p>
+
+{% if request.query_params.get('saved') == '1' %}
+<div class="alert alert-success" role="alert">Data saved.</div>
+{% endif %}
+
+<form action="/templates/{{ template.id }}/backfill/save" method="post">
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    {% for f in data_fields %}
+                    <th>{{ f.label }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for inst in instances %}
+                <tr>
+                    <td><a href="/tasks/{{ inst.id }}">{{ inst.year }}-{{ "%02d"|format(inst.month or 0) if inst.month else inst.year }}</a></td>
+                    {% for f in data_fields %}
+                    <td>
+                        {% set val = task_values_map.get(inst.id, {}).get(f.field_key, '') %}
+                        {% if f.data_type == 'int' %}
+                        <input type="number" class="form-control form-control-sm" name="task_{{ inst.id }}__{{ f.field_key }}" value="{{ val }}" step="1">
+                        {% elif f.data_type == 'float' or f.data_type == 'currency' %}
+                        <input type="number" class="form-control form-control-sm" name="task_{{ inst.id }}__{{ f.field_key }}" value="{{ val }}" step="0.01">
+                        {% elif f.data_type == 'bool' %}
+                        <input type="checkbox" class="form-check-input" name="task_{{ inst.id }}__{{ f.field_key }}" value="1" {% if val in ('1','true','yes') %}checked{% endif %}>
+                        {% elif f.data_type == 'date' %}
+                        <input type="date" class="form-control form-control-sm" name="task_{{ inst.id }}__{{ f.field_key }}" value="{{ val }}">
+                        {% else %}
+                        <input type="text" class="form-control form-control-sm" name="task_{{ inst.id }}__{{ f.field_key }}" value="{{ val }}">
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% else %}
+                <tr><td colspan="{{ data_fields|length + 1 }}">No task instances for {{ year }}. Create tasks first.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <button type="submit" class="btn btn-primary">Save All</button>
+</form>
+{% endblock %}

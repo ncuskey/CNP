@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Retention Advisor - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Retention Advisor</h1>
+<p>Review evidence by retention status. Curated defensibility — know what to keep and when to review.</p>
+<p><a href="/search?q=delete+candidate" class="btn btn-outline-secondary btn-sm">Search: delete candidate</a> <a href="/search?q=review+soon" class="btn btn-outline-secondary btn-sm">Search: review soon</a></p>
+
+<form method="get" action="/retention" class="row g-2 mb-3">
+    <div class="col-auto">
+        <label class="form-label">Category</label>
+        <select name="category" class="form-select form-select-sm">
+            <option value="">All</option>
+            {% for c in categories %}
+            <option value="{{ c }}" {% if c == category_filter %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Type</label>
+        <select name="evidence_type" class="form-select form-select-sm">
+            <option value="">All</option>
+            {% for et in evidence_types %}
+            <option value="{{ et }}" {% if et == evidence_type_filter %}selected{% endif %}>{{ et }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Year</label>
+        <input type="number" class="form-control form-control-sm" name="year" value="{{ year_filter or '' }}" placeholder="Filter by year">
+    </div>
+    <div class="col-auto d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm">Filter</button></div>
+</form>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Bulk actions</h5></div>
+    <div class="card-body">
+        <form method="post" action="/retention/bulk-action" id="bulk-form" class="row g-2">
+            <p class="col-12">Select items below, then choose an action:</p>
+            <div class="col-auto"><select name="disposition" class="form-select form-select-sm">
+                <option value="">-- No disposition change --</option>
+                <option value="keep">Mark Keep</option>
+                <option value="delete_candidate">Mark Delete Candidate</option>
+            </select></div>
+            <div class="col-auto"><input type="date" class="form-control form-control-sm" name="review_date" placeholder="Review Date"></div>
+            <div class="col-auto"><input type="date" class="form-control form-control-sm" name="keep_until" placeholder="Keep Until"></div>
+            <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Apply to Selected</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Safe to delete</h5></div>
+    <div class="card-body">
+        <p class="text-muted small">keep_until passed or marked delete_candidate</p>
+        <table class="table table-striped table-hover">
+            <thead><tr><th><input type="checkbox" form="bulk-form" name="item_id" value="" onclick="document.querySelectorAll('input[form=bulk-form][name=item_id][value!=\'\']').forEach(c=>c.checked=this.checked)"></th><th>File</th><th>Task</th><th>Keep Until</th><th></th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for e in safe_to_delete %}
+            <tr>
+                <td><input type="checkbox" form="bulk-form" name="item_id" value="{{ e.id }}"></td>
+                <td>{{ e.original_filename }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}">{{ e.task.template.name if e.task.template else 'Task' }} ({{ e.task.year }})</a>{% else %}<em>Task deleted</em>{% endif %}</td>
+                <td>{{ e.keep_until or '-' }}</td>
+                <td><a href="/evidence/{{ e.id }}/explain" class="btn btn-sm btn-outline-secondary">Why?</a></td>
+                <td><form action="/evidence/{{ e.id }}/disposition" method="post" class="d-inline"><input type="hidden" name="disposition" value="keep"><button type="submit" class="btn btn-sm btn-outline-primary">Mark Keep</button></form></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">None</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Review soon (within 60 days)</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th><input type="checkbox" form="bulk-form" name="item_id" value="" onclick="document.querySelectorAll('input[form=bulk-form][name=item_id][value!=\'\']').forEach(c=>c.checked=this.checked)"></th><th>File</th><th>Task</th><th>Review Date</th><th></th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for e in review_soon %}
+            <tr>
+                <td><input type="checkbox" form="bulk-form" name="item_id" value="{{ e.id }}"></td>
+                <td>{{ e.original_filename }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}">{{ e.task.template.name if e.task.template else 'Task' }} ({{ e.task.year }})</a>{% else %}<em>Task deleted</em>{% endif %}</td>
+                <td>{{ e.review_date }}</td>
+                <td><a href="/evidence/{{ e.id }}/explain" class="btn btn-sm btn-outline-secondary">Why?</a></td>
+                <td><form action="/evidence/{{ e.id }}/disposition" method="post" class="d-inline"><input type="hidden" name="disposition" value="delete_candidate"><button type="submit" class="btn btn-sm btn-outline-warning">Mark Delete Candidate</button></form></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">None</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">Keep</h5></div>
+    <div class="card-body">
+        <p class="text-muted small">Everything else</p>
+        <table class="table table-striped table-hover">
+            <thead><tr><th><input type="checkbox" form="bulk-form" name="item_id" value="" onclick="document.querySelectorAll('input[form=bulk-form][name=item_id][value!=\'\']').forEach(c=>c.checked=this.checked)"></th><th>File</th><th>Task</th><th>Keep Until</th><th>Review</th><th></th></tr></thead>
+            <tbody>
+            {% for e in keep %}
+            <tr>
+                <td><input type="checkbox" form="bulk-form" name="item_id" value="{{ e.id }}"></td>
+                <td>{{ e.original_filename }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}">{{ e.task.template.name if e.task.template else 'Task' }} ({{ e.task.year }})</a>{% else %}<em>Task deleted</em>{% endif %}</td>
+                <td>{{ e.keep_until or 'Permanent' }}</td>
+                <td>{{ e.review_date or '-' }}</td>
+                <td><a href="/evidence/{{ e.id }}/explain" class="btn btn-sm btn-outline-secondary">Why?</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">None</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

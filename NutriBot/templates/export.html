@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Export Audit Packet - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Export Audit Packet</h1>
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+<p>Export tasks and evidence to a folder with index file. Stored in vault/_audit_packets/.</p>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">By Year + Category</h5></div>
+    <div class="card-body">
+        <form action="/export" method="post">
+            <div class="row g-2 mb-2">
+                <div class="col-auto">
+                    <label class="form-label">Year</label>
+                    <input type="number" class="form-control form-control-sm" name="year" value="{{ year }}" min="2020" max="2035" required>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select form-select-sm" required>
+                        <option value="">-- Select --</option>
+                        {% for c in categories %}
+                        <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-auto d-flex align-items-end">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" name="include_generated" value="true" id="inc_gen">
+                        <label class="form-check-label" for="inc_gen">Include generated documents</label>
+                    </div>
+                </div>
+                <div class="col-auto d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm">Export</button></div>
+            </div>
+        </form>
+        {% if request.query_params.get('exported') %}
+        <div class="alert alert-success mt-2 mb-0" role="alert">Exported to {{ request.query_params.get('exported') }}</div>
+        {% endif %}
+    </div>
+</div>
+<p class="mt-2">Task-level export is on each <a href="/today">task detail</a> page.</p>
+{% endblock %}

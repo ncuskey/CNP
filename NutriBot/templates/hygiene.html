@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Vault Hygiene - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Vault Hygiene</h1>
+<p>Identify orphaned evidence records (DB points to missing files) and orphaned files (files not in DB).</p>
+
+<form method="get" action="/hygiene" class="row g-2 mb-3">
+    <div class="col-auto"><input type="number" class="form-control form-control-sm" name="year" value="{{ year }}" min="2020" max="2035"></div>
+    <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Filter</button></div>
+</form>
+
+{% if request.query_params.get('moved') %}
+<div class="alert alert-success" role="alert">Moved {{ request.query_params.get('moved') }} file(s) to _untracked.</div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Orphaned evidence</h5></div>
+    <div class="card-body">
+        <p class="text-muted small">EvidenceItem records where the file no longer exists in the vault.</p>
+        <table class="table table-striped">
+            <thead><tr><th>ID</th><th>File</th><th>Task</th><th>Path</th><th>Action</th></tr></thead>
+            <tbody>
+            {% for e in orphaned_evidence %}
+            <tr>
+                <td>{{ e.id }}</td>
+                <td>{{ e.original_filename }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}">{{ e.task.template.name if e.task.template else 'Task' }} ({{ e.task.year }})</a>{% else %}<em>Task deleted</em>{% endif %}</td>
+                <td><code class="small">{{ e.file_path }}</code></td>
+                <td><form action="/hygiene/mark-missing-evidence" method="post" class="d-inline"><input type="hidden" name="item_id" value="{{ e.id }}"><button type="submit" class="btn btn-sm btn-outline-warning">Mark as missing</button></form></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5">None</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">Orphaned files</h5></div>
+    <div class="card-body">
+        <p class="text-muted small">Files in vault not referenced by any EvidenceItem. Excludes _inbox, _trash, _audit_packets, _untracked.</p>
+        <form method="post" action="/hygiene/move-orphaned-files" id="orphaned-form" class="mb-2">
+            <button type="submit" class="btn btn-warning btn-sm">Move all to _untracked</button>
+        </form>
+        <table class="table table-striped">
+            <thead><tr><th><input type="checkbox" form="orphaned-form" name="path" value="" onclick="document.querySelectorAll('input[form=orphaned-form][name=path][value!=\'\']').forEach(c=>c.checked=this.checked)"></th><th>Path</th></tr></thead>
+            <tbody>
+            {% for path in orphaned_files %}
+            <tr>
+                <td><input type="checkbox" form="orphaned-form" name="path" value="{{ path }}"></td>
+                <td><code class="small">{{ path }}</code></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="2">None</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p class="small text-muted mb-0">Select specific files and submit the form above to move only those. Or click "Move all to _untracked" to move all listed files.</p>
+    </div>
+</div>
+{% endblock %}

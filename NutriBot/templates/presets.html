@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Preset Library - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Preset Library</h1>
+<p>Install curated TaskTemplates, EvidenceRequirements, and RetentionRules. Safe to run multiple times — existing items are skipped.</p>
+
+{% if installed %}
+<div class="alert alert-success" role="alert"><strong>Install complete.</strong>
+    {% if result.added_templates is not none %}Templates: +{{ result.added_templates }}{% if result.skipped_templates %}, skipped {{ result.skipped_templates }}{% endif %}.{% endif %}
+    {% if result.added_requirements is not none %}Requirements: +{{ result.added_requirements }}{% if result.skipped_requirements %}, skipped {{ result.skipped_requirements }}{% endif %}.{% endif %}
+    {% if result.added_retention_rules is not none %}Retention rules: +{{ result.added_retention_rules }}{% if result.skipped_retention_rules %}, skipped {{ result.skipped_retention_rules }}{% endif %}.{% endif %}
+</div>
+{% endif %}
+
+{% for p in packs %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">{{ p.name }}{% if p.version %} <small class="text-muted">v{{ p.version }}</small>{% endif %}</h5>
+        <p class="card-text">{{ p.description }}</p>
+        <a href="/presets/{{ p.id }}/preview" class="btn btn-outline-primary btn-sm">Preview Install</a>
+        <form method="post" action="/presets/{{ p.id }}/install" class="d-inline">
+            <button type="submit" class="btn btn-primary btn-sm">Install</button>
+        </form>
+    </div>
+</div>
+{% else %}
+<p>No preset packs found. Add JSON files to <code>data/presets/</code>.</p>
+{% endfor %}
+{% endblock %}

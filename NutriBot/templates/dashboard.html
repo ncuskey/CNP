@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - BCSD Child Nutrition Ops Console{% endblock %}
+{% block head %}
+<style>
+.dashboard-collapse-toggle .collapse-icon { transition: transform 0.2s ease; display: inline-block; }
+.dashboard-collapse-toggle[aria-expanded="false"] .collapse-icon { transform: rotate(-90deg); }
+</style>
+{% endblock %}
+{% block content %}
+<h1 class="mb-3">Dashboard</h1>
+
+<form method="get" action="/dashboard" class="row g-2 mb-3 flex-wrap">
+    <div class="col-auto">
+        <label class="form-label">Year</label>
+        <select name="year" class="form-select form-select-sm">
+            {% for y in years %}
+            <option value="{{ y }}" {% if y == year_filter %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Category</label>
+        <select name="category" class="form-select form-select-sm">
+            <option value="">All</option>
+            {% for c in categories %}
+            <option value="{{ c }}" {% if c == category_filter %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select form-select-sm">
+            <option value="">All</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+        </select>
+    </div>
+    <div class="col-auto d-flex align-items-end">
+        <div class="form-check me-2">
+            <input class="form-check-input" type="checkbox" name="missing_required" value="yes" id="mr" {% if missing_required_filter == 'yes' %}checked{% endif %}>
+            <label class="form-check-label" for="mr">Missing required evidence</label>
+        </div>
+        <div class="form-check me-2">
+            <input class="form-check-input" type="checkbox" name="audit_risk" value="yes" id="ar" {% if audit_risk_filter == 'yes' %}checked{% endif %}>
+            <label class="form-check-label" for="ar">Audit risk (&lt; 60)</label>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    </div>
+</form>
+<p><a href="/assistant-v2">Assistant v2</a> — quick queries and free-text</p>
+
+{% if overdue %}
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Overdue</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th>Task</th><th>Category</th><th>Due</th><th>Status</th><th>Score</th><th>Missing</th><th></th></tr></thead>
+            <tbody>
+            {% for task in overdue %}
+            <tr>
+                <td>{% if task.month %}{{ task.template.name if task.template else 'Unknown' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Unknown' }}{% endif %}</td>
+                <td>{{ task.template.category if task.template else '-' }}</td>
+                <td>{{ task.due_date or '-' }}</td>
+                <td><span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.status }}</span></td>
+                <td>{% if task.readiness %}<span class="{% if task.readiness.score < 60 %}text-danger{% endif %}">{{ task.readiness.score }}</span>{% else %}-{% endif %}</td>
+                <td>{% if task.missing_req %}<span class="text-danger">{{ task.missing_req }} req</span>{% else %}-{% endif %}</td>
+                <td><a href="/tasks/{{ task.id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if due_soon_14 %}
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Due in next 14 days</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th>Task</th><th>Category</th><th>Due</th><th>Status</th><th>Score</th><th>Missing</th><th></th></tr></thead>
+            <tbody>
+            {% for task in due_soon_14 %}
+            <tr>
+                <td>{% if task.month %}{{ task.template.name if task.template else 'Unknown' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Unknown' }}{% endif %}</td>
+                <td>{{ task.template.category if task.template else '-' }}</td>
+                <td>{{ task.due_date or '-' }}</td>
+                <td><span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.status }}</span></td>
+                <td>{% if task.readiness %}{{ task.readiness.score }}{% else %}-{% endif %}</td>
+                <td>{% if task.missing_req %}<span class="text-danger">{{ task.missing_req }} req</span>{% else %}-{% endif %}</td>
+                <td><a href="/tasks/{{ task.id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if due_soon_30 %}
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Due in next 30 days</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th>Task</th><th>Category</th><th>Due</th><th>Status</th><th>Score</th><th>Missing</th><th></th></tr></thead>
+            <tbody>
+            {% for task in due_soon_30 %}
+            <tr>
+                <td>{% if task.month %}{{ task.template.name if task.template else 'Unknown' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Unknown' }}{% endif %}</td>
+                <td>{{ task.template.category if task.template else '-' }}</td>
+                <td>{{ task.due_date or '-' }}</td>
+                <td><span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.status }}</span></td>
+                <td>{% if task.readiness %}{{ task.readiness.score }}{% else %}-{% endif %}</td>
+                <td>{% if task.missing_req %}<span class="text-danger">{{ task.missing_req }} req</span>{% else %}-{% endif %}</td>
+                <td><a href="/tasks/{{ task.id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if completed_this_month %}
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Completed this month</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th>Task</th><th>Category</th><th>Due</th><th>Score</th><th>Missing</th><th></th></tr></thead>
+            <tbody>
+            {% for task in completed_this_month %}
+            <tr>
+                <td>{% if task.month %}{{ task.template.name if task.template else 'Unknown' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Unknown' }}{% endif %}</td>
+                <td>{{ task.template.category if task.template else '-' }}</td>
+                <td>{{ task.due_date or '-' }}</td>
+                <td>{% if task.readiness %}{{ task.readiness.score }}{% else %}-{% endif %}</td>
+                <td>{% if task.missing_req %}<span class="text-danger">{{ task.missing_req }} req</span>{% else %}-{% endif %}</td>
+                <td><a href="/tasks/{{ task.id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">All Tasks</h5></div>
+    <div class="card-body p-0">
+        {% if tasks_by_category %}
+        <div class="list-group list-group-flush">
+            {% for cat, templates_list in tasks_by_category %}
+            {% set cat_id = 'cat-' ~ loop.index0 %}
+            <div class="list-group-item list-group-item-action p-0 border-0">
+                <a class="d-flex align-items-center px-3 py-2 text-decoration-none text-dark bg-light border-bottom dashboard-collapse-toggle" href="#{{ cat_id }}" data-bs-toggle="collapse" aria-expanded="true" aria-controls="{{ cat_id }}">
+                    <i class="bi bi-chevron-down me-2 collapse-icon"></i>
+                    <strong>{{ cat or 'Uncategorized' }}</strong>
+                    <span class="badge bg-secondary ms-2">{{ templates_list|length }} templates</span>
+                </a>
+                <div class="collapse show" id="{{ cat_id }}">
+                    {% for tpl_name, tasks in templates_list %}
+                    {% set tpl_id = cat_id ~ '-tpl-' ~ loop.index0 %}
+                    <div class="border-start border-2 border-light ms-2">
+                        <a class="d-flex align-items-center px-3 py-2 text-decoration-none text-dark dashboard-collapse-toggle" href="#{{ tpl_id }}" data-bs-toggle="collapse" aria-expanded="false" aria-controls="{{ tpl_id }}">
+                            <i class="bi bi-chevron-down me-2 collapse-icon"></i>
+                            <span>{{ tpl_name }}</span>
+                            <span class="badge bg-light text-dark ms-2">{{ tasks|length }}</span>
+                        </a>
+                        <div class="collapse" id="{{ tpl_id }}">
+                            <table class="table table-sm table-striped table-hover mb-0">
+                                <thead>
+                                    <tr><th>Period</th><th>Due Date</th><th>Status</th><th>Score</th><th>Missing</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for task in tasks %}
+                                    <tr>
+                                        <td>{% if task.month %}{{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.year }}{% endif %}</td>
+                                        <td>{{ task.due_date or '-' }}</td>
+                                        <td><span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.status }}</span></td>
+                                        <td>{% if task.readiness %}{{ task.readiness.score }}{% else %}-{% endif %}</td>
+                                        <td>{% if task.missing_req %}<span class="text-danger">{{ task.missing_req }} req</span>{% else %}-{% endif %}</td>
+                                        <td><a href="/tasks/{{ task.id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-3 text-muted">No tasks. <a href="/planner">Generate a year plan</a> or <a href="/tasks/new">create a task</a>.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

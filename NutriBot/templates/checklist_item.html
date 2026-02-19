@@ -1,0 +1,10 @@
+<div class="list-group-item list-group-item-action d-flex align-items-center gap-2 checklist-item {% if item.completed %}list-group-item-secondary completed{% endif %}"
+     id="checklist-{{ item.id }}"
+     hx-post="/checklist/{{ item.id }}/toggle"
+     hx-trigger="click"
+     hx-target="this"
+     hx-swap="outerHTML"
+     style="cursor: pointer;">
+    <input type="checkbox" class="form-check-input" {% if item.completed %}checked{% endif %} disabled>
+    <span>{{ item.text }}</span>
+</div>

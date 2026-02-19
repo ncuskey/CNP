@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Year Plan Generated - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Year Plan Generated</h1>
+<p>Results for {{ year }}:</p>
+<ul>
+    <li><strong>Created:</strong> {{ result.created }}</li>
+    <li><strong>Already existed (skipped):</strong> {{ result.already_existed }}</li>
+    <li><strong>Skipped (no recurrence):</strong> {{ result.skipped }}</li>
+</ul>
+{% if result.errors %}
+<p style="color:#c00;">Errors:</p>
+<ul>
+    {% for e in result.errors %}
+    <li>{{ e }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+<p><a href="/planner">Generate another</a> | <a href="/today">Today</a> | <a href="/dashboard">Dashboard</a> | <a href="/calendar">Calendar</a></p>
+{% endblock %}

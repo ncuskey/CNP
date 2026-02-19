@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}New Task - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">New Task Instance</h1>
+<p>Create a task from a template for a specific year.</p>
+
+<div class="card">
+    <div class="card-body">
+        <form action="/tasks" method="post">
+            <div class="mb-3">
+                <label for="template_id" class="form-label">Template</label>
+                <select class="form-select" id="template_id" name="template_id" required>
+                    <option value="">-- Select template --</option>
+                    {% for t in templates %}
+                    <option value="{{ t.id }}">{{ t.name }} ({{ t.category }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="year" class="form-label">Year</label>
+                <input type="number" class="form-control" id="year" name="year" value="{{ current_year }}" required min="2020" max="2030">
+            </div>
+            <div class="mb-3">
+                <label for="due_date" class="form-label">Due Date</label>
+                <input type="date" class="form-control" id="due_date" name="due_date">
+            </div>
+            <button type="submit" class="btn btn-primary">Create Task</button>
+        </form>
+    </div>
+</div>
+<p class="mt-2"><a href="/today" class="btn btn-outline-secondary btn-sm">← Back to Today</a></p>
+{% endblock %}

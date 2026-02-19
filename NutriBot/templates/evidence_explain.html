@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Retention: Why? — {{ item.original_filename }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Retention: Why?</h1>
+<p><a href="/retention">← Retention Advisor</a> | <a href="/tasks/{{ task.id }}">Task</a></p>
+
+<p><strong>{{ item.original_filename }}</strong> ({{ get_evidence_types(item)|join(', ') }}, {{ item.importance }})</p>
+<p>Task: {{ task.template.name if task.template else 'Task' }} ({{ task.year }})</p>
+
+<h2>Matched rule</h2>
+{% if matched_rule %}
+<p>{{ matched_rule.description }}</p>
+<p>Category: {{ matched_rule.category }}{% if matched_rule.evidence_type %} | Type: {{ matched_rule.evidence_type }}{% endif %}{% if matched_rule.importance %} | Importance: {{ matched_rule.importance }}{% endif %}</p>
+<p>{% if matched_rule.is_permanent %}Permanent retention{% elif matched_rule.years_to_keep %}Keep {{ matched_rule.years_to_keep }} years{% else %}No automatic dates{% endif %}</p>
+{% else %}
+<p>No retention rule matched this category.</p>
+{% endif %}
+
+<h2>Logic</h2>
+<p>{{ keep_until_logic }}</p>
+{% if review_date_logic %}<p>{{ review_date_logic }}</p>{% endif %}
+
+<h2>Disposition rationale</h2>
+<p>{{ disposition_rationale }}</p>
+
+<h2>Suggested edits</h2>
+<ul>
+{% for edit in suggested_edits %}
+<li>{{ edit }}</li>
+{% endfor %}
+</ul>
+
+<p><a href="/retention">Go to Retention Advisor</a> to change disposition.</p>
+{% endblock %}

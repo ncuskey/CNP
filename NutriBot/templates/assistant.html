@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Compliance Assistant - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Compliance Assistant</h1>
+<p>Rule-based queries. Predefined views.</p>
+
+<div class="mb-3">
+    <a href="/assistant?query=due_7" class="btn btn-outline-primary btn-sm">Due in 7 days</a>
+    <a href="/assistant?query=due_14" class="btn btn-outline-primary btn-sm">Due in 14 days</a>
+    <a href="/assistant?query=due_30" class="btn btn-outline-primary btn-sm">Due in 30 days</a>
+    <a href="/assistant?query=overdue" class="btn btn-outline-primary btn-sm">Overdue</a>
+    <a href="/assistant?query=missing_required" class="btn btn-outline-primary btn-sm">Missing required evidence</a>
+    <a href="/assistant?query=missing_any" class="btn btn-outline-primary btn-sm">Tasks with no evidence</a>
+    <a href="/assistant?query=evidence_recent_7" class="btn btn-outline-primary btn-sm">Evidence added (7 days)</a>
+    <a href="/assistant?query=evidence_recent_30" class="btn btn-outline-primary btn-sm">Evidence added (30 days)</a>
+    <a href="/assistant?query=by_year&year={{ current_year }}" class="btn btn-outline-primary btn-sm">All tasks {{ current_year }} by category</a>
+</div>
+<p class="small text-muted">"Last year's tasks" is also available from a task detail page.</p>
+
+<form method="get" action="/assistant" class="row g-2 mb-3">
+    <input type="hidden" name="query" value="by_year">
+    <div class="col-auto"><input type="number" class="form-control form-control-sm" name="year" value="{{ year_param }}" min="2020" max="2035"></div>
+    <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Show by category</button></div>
+</form>
+
+{% if query_name %}
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">{{ query_name }}</h5></div>
+    <div class="card-body">
+        {% if results %}
+        {% if query == 'evidence_recent_7' or query == 'evidence_recent_30' %}
+        <table class="table table-striped">
+            <thead><tr><th>File</th><th>Type</th><th>Task</th><th>Added</th><th></th></tr></thead>
+            <tbody>
+            {% for e in results %}
+            <tr>
+                <td>{{ e.original_filename }}</td>
+                <td>{{ get_evidence_types(e)|join(', ') }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}">{{ e.task.template.name if e.task.template else 'Task' }} ({{ e.task.year }})</a>{% else %}<em>Task deleted</em>{% endif %}</td>
+                <td>{{ e.added_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{% if e.task %}<a href="/tasks/{{ e.task.id }}" class="btn btn-sm btn-outline-primary">View</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% elif query == 'by_year' %}
+        {% for cat, tasks in results.items() %}
+        <h6>{{ cat }}</h6>
+        <table class="table table-striped mb-3">
+            <thead><tr><th>Task</th><th>Due</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>{% if task.month %}{{ task.template.name if task.template else 'Unknown' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Unknown' }}{% endif %}</td>
+                <td>{{ task.due_date or '-' }}</td>
+                <td><span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.status }}</span></td>
+                <td><a href="/tasks/{{ task.id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+        {% else %}
+        <table class="table table-striped">
+            <thead><tr><th>Task</th><th>Category</th><th>Due</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            {% for task in results %}
+            <tr>
+                <td>{% if task.month %}{{ task.template.name if task.template else 'Unknown' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Unknown' }}{% endif %}</td>
+                <td>{{ task.template.category if task.template else '-' }}</td>
+                <td>{{ task.due_date or '-' }}</td>
+                <td><span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.status }}</span></td>
+                <td><a href="/tasks/{{ task.id }}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% else %}
+        <p class="mb-0">No results match.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<p class="mt-2"><a href="/today" class="btn btn-outline-secondary btn-sm">← Today</a></p>
+{% endblock %}

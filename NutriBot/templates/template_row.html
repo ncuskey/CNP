@@ -1,0 +1,6 @@
+<tr>
+    <td>{{ template.name }}</td>
+    <td>{{ template.category }}</td>
+    <td>{{ template.recurrence_rule or '-' }}</td>
+    <td><a href="/tasks/new?template_id={{ template.id }}">Create Task</a></td>
+</tr>

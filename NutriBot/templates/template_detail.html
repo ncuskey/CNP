@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ template.name }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">{{ template.name }}</h1>
+<p>Category: {{ template.category }} | Recurrence: {{ template.recurrence_rule or '-' }}</p>
+<p><a href="/templates" class="btn btn-outline-secondary btn-sm">← Templates</a> <a href="/tasks/new?template_id={{ template.id }}" class="btn btn-primary btn-sm">Create Task</a>
+{% if data_fields %}<a href="/templates/{{ template.id }}/backfill" class="btn btn-outline-primary btn-sm">Backfill Data</a>{% endif %}</p>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">Evidence Requirements</h5></div>
+    <div class="card-body">
+        <p>Define what evidence is expected for tasks from this template.</p>
+        <form action="/templates/{{ template.id }}/requirements/preset" method="post" class="mb-3">
+            <button type="submit" class="btn btn-outline-primary btn-sm">Minimal audit set (preset)</button>
+        </form>
+        <table class="table table-striped">
+            <thead><tr><th>Type</th><th>Importance</th><th>Description</th><th></th></tr></thead>
+            <tbody>
+            {% for r in requirements %}
+            <tr>
+                <td>{{ r.evidence_type }}</td>
+                <td>{{ r.importance }}</td>
+                <td>{{ r.description or '-' }}</td>
+                <td>
+                    <form action="/requirements/{{ r.id }}/delete" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">No requirements. Add below or use preset.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <form action="/templates/{{ template.id }}/requirements" method="post" class="row g-2">
+            <div class="col-auto"><select class="form-select form-select-sm" name="evidence_type" required>
+                {% for et in evidence_types %}<option value="{{ et }}">{{ et }}</option>{% endfor %}
+            </select></div>
+            <div class="col-auto"><select class="form-select form-select-sm" name="importance" required>
+                {% for imp in importance_levels %}<option value="{{ imp }}">{{ imp }}</option>{% endfor %}
+            </select></div>
+            <div class="col-auto"><input type="text" class="form-control form-control-sm" name="description" placeholder="Description"></div>
+            <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Add</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Quick Capture</h5>
+        {% if not tasks_for_quick %}
+        <p class="mb-0">No tasks for this year. <a href="/planner">Generate a year plan</a> or <a href="/tasks/new">create a task</a>.</p>
+        {% else %}
+        <div id="quick-note-feedback" class="mb-2"></div>
+        <form action="/quick/note" method="post" class="mb-3" hx-post="/quick/note" hx-target="#quick-note-feedback" hx-swap="innerHTML" hx-on::after-request="this.reset()">
+            <h6>Quick Note</h6>
+            <div class="row g-2 mb-2">
+                <div class="col-auto"><select name="task_id" class="form-select form-select-sm" required>
+                    <option value="">Select task...</option>
+                    {% for t in tasks_for_quick %}
+                    <option value="{{ t.id }}" {% if request.cookies.get('last_task_id') and request.cookies.get('last_task_id')|int == t.id %}selected{% endif %}>{% if t.month %}{{ t.template.name if t.template else 'Task' }} - {{ t.year }}-{{ "%02d"|format(t.month) }}{% else %}{{ t.template.name if t.template else 'Task' }} ({{ t.year }}){% endif %}</option>
+                    {% endfor %}
+                </select></div>
+                <div class="col"><textarea name="content" class="form-control form-control-sm" rows="2" placeholder="Note..." required></textarea></div>
+                <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Add Note</button></div>
+            </div>
+        </form>
+
+        <div id="quick-evidence-feedback" class="mb-2"></div>
+        <form action="/quick/evidence" method="post" enctype="multipart/form-data" class="mb-3" hx-post="/quick/evidence" hx-target="#quick-evidence-feedback" hx-swap="innerHTML" hx-on::after-request="this.reset()">
+            <h6>Quick Evidence</h6>
+            <div class="row g-2 mb-2">
+                <div class="col-auto"><select name="task_id" class="form-select form-select-sm" required>
+                    <option value="">Select task...</option>
+                    {% for t in tasks_for_quick %}
+                    <option value="{{ t.id }}" {% if request.cookies.get('last_task_id') and request.cookies.get('last_task_id')|int == t.id %}selected{% endif %}>{% if t.month %}{{ t.template.name if t.template else 'Task' }} - {{ t.year }}-{{ "%02d"|format(t.month) }}{% else %}{{ t.template.name if t.template else 'Task' }} ({{ t.year }}){% endif %}</option>
+                    {% endfor %}
+                </select></div>
+                <div class="col-auto"><input type="file" class="form-control form-control-sm" name="file" required></div>
+                <div class="col-auto">
+                    <select name="evidence_types" class="form-select form-select-sm" multiple size="3" title="Hold Ctrl to select multiple types">
+                        {% for et in evidence_types %}<option value="{{ et }}">{{ et }}</option>{% endfor %}
+                    </select>
+                    <small class="text-muted">Ctrl+click for multiple</small>
+                </div>
+                <div class="col-auto"><select name="importance" class="form-select form-select-sm" required>
+                    {% for imp in importance_levels %}<option value="{{ imp }}">{{ imp }}</option>{% endfor %}
+                </select></div>
+                <div class="col-auto"><input type="text" class="form-control form-control-sm" name="description" placeholder="Description"></div>
+                <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Attach</button></div>
+            </div>
+        </form>
+
+        <div id="quick-log-feedback" class="mb-2"></div>
+        <form action="/quick/log" method="post" hx-post="/quick/log" hx-target="#quick-log-feedback" hx-swap="innerHTML" hx-on::after-request="this.reset()">
+            <h6>Quick Log (communication)</h6>
+            <div class="row g-2">
+                <div class="col-auto"><select name="task_id" class="form-select form-select-sm" required>
+                    <option value="">Select task...</option>
+                    {% for t in tasks_for_quick %}
+                    <option value="{{ t.id }}" {% if request.cookies.get('last_task_id') and request.cookies.get('last_task_id')|int == t.id %}selected{% endif %}>{% if t.month %}{{ t.template.name if t.template else 'Task' }} - {{ t.year }}-{{ "%02d"|format(t.month) }}{% else %}{{ t.template.name if t.template else 'Task' }} ({{ t.year }}){% endif %}</option>
+                    {% endfor %}
+                </select></div>
+                <div class="col"><textarea name="content" class="form-control form-control-sm" rows="2" placeholder="Communication log..." required></textarea></div>
+                <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Log</button></div>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>

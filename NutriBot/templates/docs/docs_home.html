@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Generate Documents — {{ task.template.name if task.template else 'Task' }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Generate Documents</h1>
+<p><a href="/tasks/{{ task.id }}">← Back to Task</a></p>
+
+<h2>Task Cover Sheet</h2>
+<p>Summary of task, checklist, notes, missing evidence.</p>
+<p>
+    <a href="/tasks/{{ task.id }}/docs/cover" target="_blank" class="btn">Preview (HTML)</a>
+    <form action="/tasks/{{ task.id }}/docs/cover/pdf" method="post" style="display:inline;">
+        <button type="submit" class="btn">Download PDF</button>
+    </form>
+</p>
+
+<h2>Compliance Memo</h2>
+<p>Structured memo with context, actions, decision, risks.</p>
+<p>
+    <a href="/tasks/{{ task.id }}/docs/memo/edit" class="btn">Edit Memo</a>
+    <a href="/tasks/{{ task.id }}/docs/memo" target="_blank" class="btn">Preview (HTML)</a>
+    <form action="/tasks/{{ task.id }}/docs/memo/pdf" method="post" style="display:inline;">
+        <button type="submit" class="btn">Download PDF</button>
+    </form>
+</p>
+
+<h2>Evidence Index</h2>
+<p>Table of evidence items with type, importance, retention.</p>
+<p>
+    <a href="/tasks/{{ task.id }}/docs/evidence" target="_blank" class="btn">Preview (HTML)</a>
+    <form action="/tasks/{{ task.id }}/docs/evidence/pdf" method="post" style="display:inline;">
+        <button type="submit" class="btn">Download PDF</button>
+    </form>
+</p>
+
+{% if pdf_available %}
+<p style="color:#080; font-size:0.9rem;">PDF generation available ({{ pdf_backend }}).</p>
+{% else %}
+<p style="color:#c60; font-size:0.9rem;">PDF generation not available. Install weasyprint or reportlab. See README.</p>
+{% endif %}
+{% endblock %}
