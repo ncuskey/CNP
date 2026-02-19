@@ -86,14 +86,57 @@ class GoogleDriveClient:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self._credentials_file, SCOPES
-                )
-                creds = flow.run_local_server(port=0)
+                creds = self._run_auth_flow()
             with open(self._token_file, "w") as token:
                 token.write(creds.to_json())
 
         return creds
+
+    def _run_auth_flow(self) -> Credentials:
+        """Interactive OAuth flow suitable for headless/remote environments.
+
+        Prints an authorization URL, waits for the user to visit it and
+        authorize, then asks them to paste back the redirect URL (which
+        looks like ``http://localhost/?code=4/0A...&scope=...``).
+        The authorization code is extracted from that URL and exchanged
+        for credentials.
+        """
+        from urllib.parse import parse_qs, urlparse
+
+        from google_auth_oauthlib.flow import Flow
+
+        flow = Flow.from_client_secrets_file(
+            self._credentials_file,
+            scopes=SCOPES,
+            redirect_uri="http://localhost",
+        )
+        auth_url, _ = flow.authorization_url(
+            access_type="offline",
+            include_granted_scopes="true",
+            prompt="consent",
+        )
+
+        print("\n" + "=" * 60)
+        print("Authorize this app by visiting:\n")
+        print(f"  {auth_url}")
+        print(
+            "\nAfter authorizing, your browser will redirect to a URL that\n"
+            "starts with http://localhost/?code=... and may show an error\n"
+            "page — that is expected.\n"
+            "Copy the full URL from your browser's address bar and paste it below."
+        )
+        print("=" * 60 + "\n")
+
+        redirect_response = input("Paste the full redirect URL here: ").strip()
+        parsed = urlparse(redirect_response)
+        code = parse_qs(parsed.query).get("code", [None])[0]
+        if not code:
+            raise ValueError(
+                f"Could not extract authorization code from URL: {redirect_response!r}"
+            )
+
+        flow.fetch_token(code=code)
+        return flow.credentials
 
     # ------------------------------------------------------------------
     # List files
