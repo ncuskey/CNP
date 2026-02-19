@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BCSD Child Nutrition Ops Console{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/theme.css" rel="stylesheet">
+    <link href="/static/css/adminator-layout.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    {% block head %}{% endblock %}
+</head>
+<body class="app">
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-inner">
+                <div class="sidebar-logo">
+                    <a href="/dashboard">
+                        <h5 class="logo-text">BCSD Child Nutrition</h5>
+                    </a>
+                </div>
+                <ul class="sidebar-menu">
+                    <li class="nav-item" style="margin-top: 0.5rem;">
+                        <a class="sidebar-link" href="/search">
+                            <span class="icon-holder"><i class="bi bi-search"></i></span>
+                            <span class="title">Search</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/today">
+                            <span class="icon-holder"><i class="bi bi-calendar-day"></i></span>
+                            <span class="title">Today</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/review">
+                            <span class="icon-holder"><i class="bi bi-clipboard-check"></i></span>
+                            <span class="title">Review</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/trends">
+                            <span class="icon-holder"><i class="bi bi-bar-chart"></i></span>
+                            <span class="title">Trends</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/history">
+                            <span class="icon-holder"><i class="bi bi-clock-history"></i></span>
+                            <span class="title">History</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/comparison">
+                            <span class="icon-holder"><i class="bi bi-arrow-left-right"></i></span>
+                            <span class="title">Comparison</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/dashboard">
+                            <span class="icon-holder"><i class="bi bi-house"></i></span>
+                            <span class="title">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        {% if request.cookies.get('review_mode') == '1' %}
+                        <a class="sidebar-link" href="/review-mode?on=0" style="background: var(--c-warning); color: white;">
+                            <span class="icon-holder"><i class="bi bi-eye"></i></span>
+                            <span class="title">Review Mode ON</span>
+                        </a>
+                        {% else %}
+                        <a class="sidebar-link" href="/review-mode?on=1">
+                            <span class="icon-holder"><i class="bi bi-eye"></i></span>
+                            <span class="title">Review Mode</span>
+                        </a>
+                        {% endif %}
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/quick">
+                            <span class="icon-holder"><i class="bi bi-lightning"></i></span>
+                            <span class="title">Quick Capture</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/inbox">
+                            <span class="icon-holder"><i class="bi bi-inbox"></i></span>
+                            <span class="title">Inbox</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/backups">
+                            <span class="icon-holder"><i class="bi bi-archive"></i></span>
+                            <span class="title">Backups</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/presets">
+                            <span class="icon-holder"><i class="bi bi-bookmark"></i></span>
+                            <span class="title">Presets</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/planner">
+                            <span class="icon-holder"><i class="bi bi-calendar3"></i></span>
+                            <span class="title">Year Planner</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/calendar">
+                            <span class="icon-holder"><i class="bi bi-calendar-week"></i></span>
+                            <span class="title">Calendar</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/assistant">
+                            <span class="icon-holder"><i class="bi bi-robot"></i></span>
+                            <span class="title">Assistant</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/assistant-v2">
+                            <span class="icon-holder"><i class="bi bi-robot"></i></span>
+                            <span class="title">Assistant v2</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/evidence">
+                            <span class="icon-holder"><i class="bi bi-folder"></i></span>
+                            <span class="title">Evidence</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/retention">
+                            <span class="icon-holder"><i class="bi bi-shield-check"></i></span>
+                            <span class="title">Retention</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/claims">
+                            <span class="icon-holder"><i class="bi bi-currency-dollar"></i></span>
+                            <span class="title">Claims</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/exports">
+                            <span class="icon-holder"><i class="bi bi-file-earmark-arrow-down"></i></span>
+                            <span class="title">Exports</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/hygiene">
+                            <span class="icon-holder"><i class="bi bi-droplet"></i></span>
+                            <span class="title">Hygiene</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/export">
+                            <span class="icon-holder"><i class="bi bi-download"></i></span>
+                            <span class="title">Export</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/settings">
+                            <span class="icon-holder"><i class="bi bi-gear"></i></span>
+                            <span class="title">Settings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/regulations">
+                            <span class="icon-holder"><i class="bi bi-journal-text"></i></span>
+                            <span class="title">Regulations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/templates">
+                            <span class="icon-holder"><i class="bi bi-file-text"></i></span>
+                            <span class="title">Templates</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/templates/new">
+                            <span class="icon-holder"><i class="bi bi-plus-circle"></i></span>
+                            <span class="title">New Template</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="sidebar-link" href="/tasks/new">
+                            <span class="icon-holder"><i class="bi bi-plus-square"></i></span>
+                            <span class="title">New Task</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Page container -->
+        <div class="page-container">
+            <!-- Topbar -->
+            <div class="header navbar">
+                <div class="header-container">
+                    <ul class="nav-left">
+                        <li>
+                            <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Toggle sidebar">
+                                <i class="bi bi-list"></i>
+                            </button>
+                        </li>
+                        <li>
+                            <form method="get" action="/search" class="d-flex">
+                                <input class="form-control form-control-sm" type="search" name="q" placeholder="Search..." value="{{ request.query_params.get('q', '') }}" style="width: 160px;">
+                                <button type="submit" class="btn btn-sm btn-primary ms-1">Search</button>
+                            </form>
+                        </li>
+                    </ul>
+                    <ul class="nav-right">
+                        <li>
+                            {% if request.cookies.get('review_mode') == '1' %}
+                            <a href="/review-mode?on=0" class="btn btn-warning btn-sm">Review Mode ON</a>
+                            {% else %}
+                            <a href="/review-mode?on=1" class="btn btn-outline-secondary btn-sm">Review Mode</a>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <main class="main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            document.body.classList.toggle('sidebar-open');
+        });
+    </script>
+</body>
+</html>

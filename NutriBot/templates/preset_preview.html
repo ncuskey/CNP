@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Preview: {{ pack.name }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Preview: {{ pack.name }}</h1>
+<p>{{ pack.description }}</p>
+
+<h2>Summary</h2>
+<table>
+    <tr><th>Templates to add</th><td>{{ summary.templates_to_add|length }}</td></tr>
+    <tr><th>Templates to skip (already exist)</th><td>{{ summary.templates_to_skip|length }}</td></tr>
+    <tr><th>Evidence requirements to add</th><td>{{ summary.requirements_to_add }}</td></tr>
+    <tr><th>Evidence requirements to skip</th><td>{{ summary.requirements_to_skip }}</td></tr>
+    <tr><th>Retention rules to add</th><td>{{ summary.retention_to_add }}</td></tr>
+    <tr><th>Retention rules to skip</th><td>{{ summary.retention_to_skip }}</td></tr>
+</table>
+
+{% if summary.templates_to_add %}
+<h3>Templates to add</h3>
+<ul>
+{% for t in summary.templates_to_add %}
+<li>{{ t.name }} ({{ t.category }})</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if summary.templates_to_skip %}
+<h3>Templates to skip (already exist)</h3>
+<ul>
+{% for t in summary.templates_to_skip %}
+<li>{{ t.name }} ({{ t.category }})</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if summary.notes %}
+<p><small>{{ summary.notes }}</small></p>
+{% endif %}
+
+<form method="post" action="/presets/{{ pack_id }}/install" style="margin-top:1rem;">
+    <button type="submit" class="btn">Install</button>
+</form>
+<p><a href="/presets">← Back to Presets</a></p>
+{% endblock %}

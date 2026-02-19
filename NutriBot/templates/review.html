@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Review Prep Mode - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Review Prep Mode</h1>
+<p>If a state review happened tomorrow, what is missing?</p>
+<p><a href="/today" class="btn btn-sm btn-outline-secondary">← Today</a> | Year: {{ year }}</p>
+
+{% include "notification_banner.html" %}
+
+{% if regs_due_soon_count and regs_due_soon_count > 0 %}
+<div class="alert alert-info mb-3">
+    <strong>Regulations review due soon:</strong> <a href="/regulations?due=soon">{{ regs_due_soon_count }}</a> — <a href="/regulations">View Regulations</a>
+</div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">1. Critical Issues</h5></div>
+    <div class="card-body">
+        {% if critical %}
+        <ul class="list-group list-group-flush">
+        {% for t in critical %}
+        <li class="list-group-item">
+            <a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a>
+            {% if t.missing_req %}<span class="text-danger">Missing {{ t.missing_req }} required</span>{% endif %}
+            {% if t.due_date and t.due_date < today and t.status != 'completed' %}<span class="text-danger">Overdue</span>{% endif %}
+            {% if t.readiness.score < 60 %}<span class="text-danger">Score {{ t.readiness.score }}</span>{% endif %}
+            — <a href="/tasks/{{ t.id }}" class="btn btn-sm btn-outline-primary">Open</a>
+            <a href="/tasks/{{ t.id }}#evidence" class="btn btn-sm btn-outline-secondary">Attach</a>
+            <a href="/tasks/{{ t.id }}/memo/draft" class="btn btn-sm btn-outline-secondary">Memo</a>
+        </li>
+        {% endfor %}
+        </ul>
+        {% else %}
+        <p class="mb-0">No critical issues.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">2. Category Breakdown</h5></div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead><tr><th>Category</th><th>Tasks</th><th>Missing Req</th><th>Overdue</th><th>Avg Score</th></tr></thead>
+            <tbody>
+            {% for cat, d in by_category.items() %}
+            <tr>
+                <td>{{ cat }}</td>
+                <td>{{ d.total }}</td>
+                <td>{% if d.missing_req %}<span class="text-danger">{{ d.missing_req }}</span>{% else %}0{% endif %}</td>
+                <td>{% if d.overdue %}<span class="text-danger">{{ d.overdue }}</span>{% else %}0{% endif %}</td>
+                <td>{{ d.avg_score }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">3. Missing Evidence Detail</h5></div>
+    <div class="card-body">
+        {% if missing_detail %}
+        <table class="table table-striped">
+            <thead><tr><th>Task</th><th>Category</th><th>Missing Types</th><th>Due</th><th>Score</th><th></th></tr></thead>
+            <tbody>
+            {% for t in missing_detail %}
+            <tr>
+                <td><a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a></td>
+                <td>{{ t.template.category if t.template else '-' }}</td>
+                <td>{{ t.missing_types|join(', ') if t.missing_types else '-' }}</td>
+                <td>{{ t.due_date or '-' }}</td>
+                <td>{{ t.readiness.score }}</td>
+                <td><a href="/tasks/{{ t.id }}" class="btn btn-sm btn-outline-primary">Open</a> <a href="/tasks/{{ t.id }}#evidence" class="btn btn-sm btn-outline-secondary">Attach</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="mb-0">None.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header"><h5 class="mb-0">4. Memo Status (missing compliance memo)</h5></div>
+    <div class="card-body">
+        {% if missing_memo %}
+        <ul class="list-group list-group-flush">
+        {% for t in missing_memo %}
+        <li class="list-group-item"><a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a> — <a href="/tasks/{{ t.id }}/memo/draft" class="btn btn-sm btn-outline-primary">Draft Memo</a></li>
+        {% endfor %}
+        </ul>
+        {% else %}
+        <p class="mb-0">All tasks have memos.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="mb-0">5. Export Readiness (incomplete for audit packet)</h5></div>
+    <div class="card-body">
+        {% if export_incomplete %}
+        <ul class="list-group list-group-flush">
+        {% for t in export_incomplete %}
+        <li class="list-group-item"><a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a> — missing required evidence or memo</li>
+        {% endfor %}
+        </ul>
+        {% else %}
+        <p class="mb-0">All tasks export-ready.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

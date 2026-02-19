@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Evidence Inbox - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Evidence Inbox</h1>
+<p>Files in <code>vault/_inbox/</code> not yet assigned. Drop files there, then assign to tasks.</p>
+<p><a href="/today" class="btn btn-outline-secondary btn-sm">← Today</a></p>
+
+{% if 'assigned_count' in request.query_params or 'failed_count' in request.query_params %}
+<div class="alert alert-success" role="alert">
+    Assigned {{ request.query_params.get('assigned_count', 0) }} file(s).
+    {% if request.query_params.get('failed_count', 0)|int > 0 %}
+    Failed: {{ request.query_params.get('failed_count') }}{% if request.query_params.get('failures') %} ({{ request.query_params.get('failures') }}){% endif %}
+    {% endif %}
+</div>
+{% endif %}
+
+{% if inbox_files %}
+<form id="bulk-form" action="/inbox/assign-bulk" method="post">
+    <div class="row g-2 mb-3">
+        <div class="col-auto"><select name="task_id" class="form-select form-select-sm" required>
+            <option value="">Select task...</option>
+            {% for t in tasks %}
+            <option value="{{ t.id }}" {% if request.cookies.get('last_task_id') and request.cookies.get('last_task_id')|int == t.id %}selected{% endif %}>{% if t.month %}{{ t.template.name if t.template else 'Task' }} - {{ t.year }}-{{ "%02d"|format(t.month) }}{% else %}{{ t.template.name if t.template else 'Task' }} ({{ t.year }}){% endif %}</option>
+            {% endfor %}
+        </select></div>
+        <div class="col-auto">
+            <label class="form-label small d-block">Evidence types</label>
+            <div class="d-flex flex-wrap gap-1">
+                {% for et in evidence_types %}
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="evidence_types" value="{{ et }}" id="inbox-et-{{ loop.index }}" {% if et == 'other' %}checked{% endif %}>
+                    <label class="form-check-label small" for="inbox-et-{{ loop.index }}">{{ et }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-auto"><select name="importance" class="form-select form-select-sm">
+            {% for imp in importance_levels %}
+            <option value="{{ imp }}" {% if imp == 'supporting' %}selected{% endif %}>{{ imp }}</option>
+            {% endfor %}
+        </select></div>
+        <div class="col-auto"><input type="text" class="form-control form-control-sm" name="description" placeholder="Description"></div>
+    </div>
+</form>
+<div class="card mb-2">
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th>Select</th><th>File</th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for f in inbox_files %}
+            <tr>
+                <td><input type="checkbox" form="bulk-form" name="filename" value="{{ f.name }}"></td>
+                <td>{{ f.name }}</td>
+                <td>
+                    <a href="/inbox/assign?filename={{ f.name|urlencode }}" class="btn btn-sm btn-outline-primary">Assign</a>
+                    <form action="/inbox/delete" method="post" class="d-inline" onsubmit="return confirm('Delete from inbox?');">
+                        <input type="hidden" name="filename" value="{{ f.name }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<button type="submit" form="bulk-form" class="btn btn-primary btn-sm">Assign Selected</button>
+{% else %}
+<p>No files in inbox. Drop files into <code>vault/_inbox/</code> to assign them.</p>
+{% endif %}
+{% endblock %}

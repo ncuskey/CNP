@@ -9,27 +9,77 @@ This file provides AI assistants (Claude Code and similar tools) with the contex
 | Field | Value |
 |---|---|
 | **Repository** | `ncuskey/CNP` |
-| **Status** | New / bootstrapping |
+| **Status** | Active |
 | **Remote** | `http://local_proxy@127.0.0.1:44727/git/ncuskey/CNP` |
 
-> **Note:** This repository was created on 2026-02-19 and currently has no committed files. Update this section as the project evolves.
+> **Note:** This repository was created on 2026-02-19. See sections below for current structure and conventions.
 
 ---
 
 ## Codebase Structure
 
-_No source files exist yet. Update this section when the project is bootstrapped._
-
-Once files are added, document the directory layout here. Example pattern to follow:
-
 ```
 CNP/
-├── CLAUDE.md          # This file
-├── README.md          # Human-facing project overview
-├── src/               # Application source code
-├── tests/             # Test suites
-├── docs/              # Documentation
-└── scripts/           # Development and CI scripts
+├── CLAUDE.md              # This file
+├── requirements.txt       # Python dependencies (Google Drive client)
+├── credentials.json       # OAuth 2.0 client secrets (DO NOT COMMIT)
+├── token.json             # Cached OAuth token (DO NOT COMMIT)
+├── scripts/
+│   ├── clone_drive_folder.py   # Mirror a Drive folder tree to data/drive/
+│   ├── _get_auth_url.py        # Print OAuth consent URL for headless auth
+│   └── _exchange_token.py      # Exchange auth code for token.json
+├── src/
+│   └── google_drive.py    # GoogleDriveClient — list, download, upload via Drive API v3
+└── NutriBot/              # BCSD Child Nutrition Ops Console (FastAPI app)
+    ├── main.py            # Uvicorn entry point
+    ├── app.py             # Alternate entry point
+    ├── requirements.txt   # NutriBot-specific dependencies
+    ├── app/               # Application modules (routes, models, DB, etc.)
+    ├── templates/         # Jinja2 HTML templates
+    ├── static/            # CSS and static assets
+    ├── vault/             # Document vault (served at /vault)
+    └── data/              # SQLite database and settings JSON
+```
+
+### `src/google_drive.py`
+
+`GoogleDriveClient` authenticates with Google Drive using OAuth 2.0 and exposes:
+
+| Method | Description |
+|---|---|
+| `list_files(query, page_size, fields)` | List/search files; auto-paginates |
+| `download_file(file_id)` | Download binary content of a regular file |
+| `export_file(file_id, mime_type)` | Export a Google Workspace doc (Docs/Sheets/Slides) |
+| `upload_file(local_path, name, mime_type, parent_folder_id)` | Upload a new file |
+| `update_file(file_id, local_path, mime_type)` | Replace content of an existing file |
+
+**Authentication setup:**
+1. Create a project in the [Google Cloud Console](https://console.cloud.google.com/).
+2. Enable the **Google Drive API**.
+3. Create **OAuth 2.0 Client ID** credentials (Desktop app type).
+4. Download the client secrets JSON and save it as `credentials.json` in the project root.
+5. On first run, a browser window will open for user consent. The granted token is cached in `token.json`.
+
+### `NutriBot/`
+
+A local compliance and memory system for school nutrition programs (BCSD). Built with **FastAPI + SQLModel (SQLite) + Jinja2**. Key modules:
+
+| Module | Description |
+|---|---|
+| `app/routes.py` | All HTTP route handlers |
+| `app/models.py` | SQLModel ORM models |
+| `app/database.py` | Engine, session management, directory setup |
+| `app/evidence.py` | Evidence library and retention rules |
+| `app/ocr_extract.py` | OCR via Tesseract + PyMuPDF |
+| `app/pdf_engine.py` | PDF generation (WeasyPrint / ReportLab) |
+| `app/search_index.py` | Full-text search index |
+| `app/backup.py` | Automatic SQLite backups |
+
+**Run locally:**
+```bash
+cd NutriBot
+pip install -r requirements.txt
+uvicorn main:app --reload
 ```
 
 ---
@@ -105,17 +155,17 @@ Do **not** retry on `403` errors — those indicate a permissions or branch-name
 
 _No test framework has been configured yet. Update this section when tests are added._
 
-Document the following when applicable:
-- How to run the full test suite
-- How to run a single test file or test case
-- How to run linting and type checking
-- Any required environment setup before tests will pass
+Install dependencies before running anything:
+
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
 ## Code Conventions
 
-_Update this section with language/framework-specific conventions as the project grows._
+**Language:** Python 3.11+
 
 General rules that apply regardless of language:
 - Prefer editing existing files over creating new ones.

@@ -1,0 +1,197 @@
+/* Adminator-style layout for NutriBot - no npm build */
+
+body.app {
+  margin: 0;
+  background: var(--c-bkg-body);
+  color: var(--c-text-base);
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Wrapper for sidebar + main */
+.app > .app-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 256px;
+  height: 100vh;
+  background: var(--c-bkg-sidebar);
+  border-right: 1px solid var(--c-border);
+  z-index: 1000;
+  overflow-y: auto;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-inner {
+  padding: 1rem 0;
+}
+
+.sidebar-logo {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.sidebar-logo .logo-text {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--c-text-base);
+}
+
+.sidebar-logo a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+.sidebar-menu .nav-item {
+  margin: 0;
+}
+
+.sidebar-menu .sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1.25rem;
+  color: var(--c-text-base);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.sidebar-menu .sidebar-link:hover {
+  background: var(--c-bkg-hover);
+  color: var(--c-primary);
+}
+
+.sidebar-menu .icon-holder {
+  width: 1.5rem;
+  margin-right: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-menu .icon-holder i {
+  font-size: 1.1rem;
+  color: var(--c-icon);
+}
+
+.sidebar-menu .sidebar-link:hover .icon-holder i {
+  color: var(--c-icon-hover);
+}
+
+.sidebar-menu .title {
+  flex: 1;
+}
+
+/* Page container (main area) */
+.page-container {
+  flex: 1;
+  margin-left: 256px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+.header.navbar {
+  position: sticky;
+  top: 0;
+  background: var(--c-bkg-card);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  z-index: 100;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.nav-left, .nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  padding: 0.4rem;
+  cursor: pointer;
+  color: var(--c-text-base);
+  display: none;
+}
+
+.sidebar-toggle:hover {
+  color: var(--c-primary);
+}
+
+.sidebar-toggle i {
+  font-size: 1.25rem;
+}
+
+/* Main content */
+.main-content {
+  flex: 1;
+  padding: 1.5rem;
+  background: var(--c-bkg-body);
+}
+
+/* NutriBot-specific styles (preserved from base.html) */
+.status-pending { color: #666; }
+.status-in_progress { color: #c60; }
+.status-completed { color: #080; }
+.checklist-item { display: flex; align-items: center; gap: 0.5rem; margin: 0.25rem 0; }
+.checklist-item input[type="checkbox"] { cursor: pointer; }
+.checklist-item.completed { text-decoration: line-through; color: #666; }
+.notes-log { margin-top: 1rem; }
+.note-item { padding: 0.5rem; background: var(--c-bkg-hover); border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.9rem; }
+.note-item time { color: var(--c-text-muted); font-size: 0.8rem; }
+.btn { padding: 0.4rem 0.8rem; cursor: pointer; background: var(--c-primary); color: white; border: none; border-radius: 4px; }
+.btn:hover { background: var(--c-primary-dark); color: white; }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--c-border); }
+
+/* Mobile: sidebar hidden by default */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar-open .sidebar {
+    transform: translateX(0);
+    box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+  }
+
+  .page-container {
+    margin-left: 0;
+  }
+
+  .sidebar-toggle {
+    display: block;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+}

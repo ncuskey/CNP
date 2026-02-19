@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Calendar {{ month_name }} {{ year }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Calendar — {{ month_name }} {{ year }}</h1>
+
+<nav class="mb-3">
+    {% set prev_m = month - 1 if month > 1 else 12 %}
+    {% set prev_y = year if month > 1 else year - 1 %}
+    {% set next_m = month + 1 if month < 12 else 1 %}
+    {% set next_y = year if month < 12 else year + 1 %}
+    <a href="/calendar?year={{ prev_y }}&month={{ prev_m }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-outline-secondary btn-sm">← {{ prev_m }}/{{ prev_y }}</a>
+    <a href="/calendar?year={{ next_y }}&month={{ next_m }}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn btn-outline-secondary btn-sm">{{ next_m }}/{{ next_y }} →</a>
+</nav>
+
+<form method="get" action="/calendar" class="row g-2 mb-3">
+    <input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="month" value="{{ month }}">
+    <div class="col-auto"><select name="category" class="form-select form-select-sm">
+        <option value="">All</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if c == category_filter %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+    </select></div>
+    <div class="col-auto"><select name="status" class="form-select form-select-sm">
+        <option value="">All</option>
+        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+    </select></div>
+    <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Filter</button></div>
+</form>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-bordered mb-0" style="table-layout:fixed;">
+            <thead><tr><th style="width:14%;">Sun</th><th style="width:14%;">Mon</th><th style="width:14%;">Tue</th><th style="width:14%;">Wed</th><th style="width:14%;">Thu</th><th style="width:14%;">Fri</th><th style="width:14%;">Sat</th></tr></thead>
+            <tbody>
+            {% for week in weeks %}
+            <tr>
+                {% for d in week %}
+                <td class="p-2" style="vertical-align:top;min-height:80px;">
+                    <span class="small {% if d.month != month %}text-muted{% endif %}">{{ d.day }}</span>
+                    {% set day_tasks = tasks_by_date.get(d) or [] %}
+                    {% for task in day_tasks %}
+                    <div class="small"><a href="/tasks/{{ task.id }}">{{ task.template.name if task.template else 'Task' }}</a>{% if task.missing_req %}<span class="text-warning" title="Missing required evidence"> ⚠</span>{% endif %}</div>
+                    {% endfor %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<p class="mt-2"><a href="/today" class="btn btn-outline-secondary btn-sm">← Today</a></p>
+{% endblock %}

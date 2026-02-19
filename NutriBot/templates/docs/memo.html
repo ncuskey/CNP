@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Compliance Memo — {{ display_name }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 1.5rem; max-width: 800px; }
+        h1 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+        .date { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
+        section { margin: 1rem 0; }
+        section h2 { font-size: 1rem; margin-bottom: 0.25rem; border-bottom: 1px solid #ddd; }
+        pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
+        @media print { body { margin: 0.5in; } }
+    </style>
+</head>
+<body>
+    <h1>Compliance Memo — {{ display_name }}</h1>
+    <p class="date">Date: {{ date }}</p>
+
+    <section>
+        <h2>Context</h2>
+        <pre>{{ context or '(none)' }}</pre>
+    </section>
+
+    <section>
+        <h2>Actions Taken</h2>
+        <pre>{{ actions_taken or '(none)' }}</pre>
+    </section>
+
+    <section>
+        <h2>Decision / Outcome</h2>
+        <pre>{{ decision or '(none)' }}</pre>
+    </section>
+
+    <section>
+        <h2>Risks / Follow-ups</h2>
+        <pre>{{ risks or '(none)' }}</pre>
+    </section>
+</body>
+</html>

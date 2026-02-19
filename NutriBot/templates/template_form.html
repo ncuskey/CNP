@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}New Template - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">New Task Template</h1>
+
+{% if error %}
+<div class="alert alert-danger" role="alert">{{ error }}</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form action="/templates" method="post">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" required placeholder="e.g. Verification Report" value="{{ name or '' }}">
+            </div>
+            <div class="mb-3">
+                <label for="category" class="form-label">Category</label>
+                <input type="text" class="form-control" id="category" name="category" required placeholder="e.g. Verification, Application, Training" value="{{ category or '' }}">
+            </div>
+            <div class="mb-3">
+                <label for="recurrence_rule" class="form-label">Recurrence Rule</label>
+                <input type="text" class="form-control" id="recurrence_rule" name="recurrence_rule" placeholder="ANNUAL:10-01 or MONTHLY:10 or blank" value="{{ recurrence_rule or '' }}">
+                <div class="form-text"><strong>Format:</strong> ANNUAL:MM-DD (e.g. ANNUAL:10-01), MONTHLY:DD (e.g. MONTHLY:10), ONCE:YYYY-MM-DD, or leave blank.</div>
+            </div>
+            <div class="mb-3">
+                <label for="default_checklist" class="form-label">Default Checklist (one item per line)</label>
+                <textarea class="form-control" id="default_checklist" name="default_checklist" rows="4" placeholder="Item 1&#10;Item 2">{{ default_checklist or '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Template</button>
+        </form>
+    </div>
+</div>
+<p class="mt-2"><a href="/templates" class="btn btn-outline-secondary btn-sm">← Back to templates</a></p>
+{% endblock %}

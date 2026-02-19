@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Cover Sheet — {{ display_name }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 1.5rem; max-width: 800px; }
+        h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .meta { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
+        section { margin: 1rem 0; }
+        section h2 { font-size: 1rem; margin-bottom: 0.25rem; border-bottom: 1px solid #ddd; }
+        ul { margin: 0.25rem 0; padding-left: 1.25rem; }
+        .checklist-summary { font-weight: 500; }
+        .missing { color: #c60; }
+        @media print { body { margin: 0.5in; } }
+    </style>
+</head>
+<body>
+    <h1>Task Cover Sheet</h1>
+    <p class="meta">{{ display_name }}</p>
+
+    <section>
+        <h2>Task Details</h2>
+        <p><strong>Title:</strong> {{ template.name if template else 'Task' }}</p>
+        <p><strong>Category:</strong> {{ template.category if template else 'Other' }}</p>
+        <p><strong>Due Date:</strong> {{ task.due_date or 'N/A' }}</p>
+        <p><strong>Status:</strong> {{ task.status }}</p>
+        <p><strong>Template:</strong> {{ template.name if template else 'N/A' }}</p>
+    </section>
+
+    <section>
+        <h2>Checklist</h2>
+        <p class="checklist-summary">{{ checklist_completed }} of {{ checklist_total }} completed</p>
+        <ul>
+        {% for item in checklist %}
+            <li>{% if item.completed %}✓{% else %}○{% endif %} {{ item.text }}</li>
+        {% else %}
+            <li>No checklist items</li>
+        {% endfor %}
+        </ul>
+    </section>
+
+    <section>
+        <h2>Recent Notes</h2>
+        <ul>
+        {% for note in notes %}
+            <li><strong>{{ note.created_at.strftime('%Y-%m-%d %H:%M') }}</strong>: {{ note.content[:300] }}{% if note.content|length > 300 %}...{% endif %}</li>
+        {% else %}
+            <li>No notes</li>
+        {% endfor %}
+        </ul>
+    </section>
+
+    <section>
+        <h2>Missing Evidence</h2>
+        <p class="missing">Required: {{ missing_required }} | Supporting: {{ missing_supporting }}</p>
+    </section>
+
+    <p class="meta" style="margin-top: 2rem;">Generated: {{ created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+</body>
+</html>

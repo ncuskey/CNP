@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Backups - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Backups</h1>
+<p>Stored in <code>backups/</code>. Auto-created once per day at startup.</p>
+<p><a href="/today" class="btn btn-outline-secondary btn-sm">← Today</a></p>
+
+{% if request.query_params.get('created') %}
+<div class="alert alert-success" role="alert">Backup created: {{ request.query_params.get('created') }}</div>
+{% endif %}
+
+<form action="/backups/create" method="post" class="mb-3">
+    <button type="submit" class="btn btn-primary">Create backup now</button>
+</form>
+
+{% if backups %}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead><tr><th>Backup</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody>
+            {% for path, dt in backups %}
+            <tr>
+                <td>{{ path.name }}</td>
+                <td>{{ dt.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <form action="/backups/restore" method="post" class="d-inline" onsubmit="return confirm('Restore will overwrite current database. Continue?');">
+                        <input type="hidden" name="backup_name" value="{{ path.name }}">
+                        <button type="submit" class="btn btn-sm btn-outline-warning">Restore</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<p>No backups yet.</p>
+{% endif %}
+{% endblock %}

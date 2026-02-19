@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Trend: {{ year_data.template_name or template.name }} - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1>Template Trend: {{ year_data.template_name or (template.name if template else '') }}</h1>
+<p><a href="/trends?year={{ year }}&baseline={{ baseline }}">← Back to Trends</a></p>
+<p>Year {{ year }} vs baseline {{ baseline }}</p>
+
+<h2>Metrics</h2>
+<table>
+    <tr><th></th><th>{{ year }}</th><th>{{ baseline }}</th></tr>
+    <tr><td>Instances</td><td>{{ year_data.instance_count }}</td><td>{{ baseline_data.instance_count }}</td></tr>
+    <tr><td>Completion rate</td><td>{{ year_data.completion_rate }}%</td><td>{{ baseline_data.completion_rate }}%</td></tr>
+    <tr><td>Avg readiness</td><td>{{ year_data.avg_readiness }}</td><td>{{ baseline_data.avg_readiness }}</td></tr>
+    <tr><td>Avg evidence count</td><td>{{ year_data.avg_evidence_count }}</td><td>{{ baseline_data.avg_evidence_count }}</td></tr>
+</table>
+
+{% if year_data.top_missing_evidence_types %}
+<h3>Top missing evidence types ({{ year }})</h3>
+<ul>{% for et in year_data.top_missing_evidence_types %}<li>{{ et }}</li>{% endfor %}</ul>
+{% endif %}
+{% if baseline_data.top_missing_evidence_types %}
+<h3>Top missing evidence types ({{ baseline }})</h3>
+<ul>{% for et in baseline_data.top_missing_evidence_types %}<li>{{ et }}</li>{% endfor %}</ul>
+{% endif %}
+
+<h2>Instances ({{ year }})</h2>
+<table>
+    <thead><tr><th>Task</th><th>Readiness</th><th>Missing req</th><th>Evidence</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for inst in year_data.instances %}
+    <tr>
+        <td><a href="/tasks/{{ inst.task.id }}">{{ inst.task.template.name if inst.task.template else 'Task' }} {{ inst.task.year }}{% if inst.task.month %}-{{ "%02d"|format(inst.task.month) }}{% endif %}</a></td>
+        <td>{{ inst.readiness }}</td>
+        <td>{{ inst.missing_required }}</td>
+        <td>{{ inst.evidence_count }}</td>
+        <td>{{ inst.status }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">No instances</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

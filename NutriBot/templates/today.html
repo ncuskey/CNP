@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Today - BCSD Child Nutrition Ops Console{% endblock %}
+{% block content %}
+<h1 class="mb-3">Daily Command Center</h1>
+<p><a href="/dashboard" class="btn btn-outline-primary btn-sm">Full Dashboard</a></p>
+
+{% if onboarding_incomplete %}
+<div id="onboarding-banner" class="alert alert-info alert-dismissible fade show" role="alert">
+    <strong>Setup incomplete.</strong> <a href="/onboarding">Complete onboarding</a> to configure your district and programs.
+    <button type="button" class="btn-close" onclick="document.getElementById('onboarding-banner').style.display='none'; sessionStorage.setItem('onboarding_banner_dismissed','1');" aria-label="Dismiss"></button>
+</div>
+<script>
+if (sessionStorage.getItem('onboarding_banner_dismissed') === '1') {
+    var b = document.getElementById('onboarding-banner');
+    if (b) b.style.display = 'none';
+}
+</script>
+{% endif %}
+{% include "notification_banner.html" %}
+
+<div class="row g-2 mb-3">
+    <div class="col-md-auto">
+        <div class="card">
+            <div class="card-body py-2">
+                <strong>Review Status</strong> — Critical: {{ critical_count|default(0) }} | Avg readiness: {{ readiness_avg|default(100) }}
+            </div>
+        </div>
+    </div>
+    {% if this_month_stats and last_year_month_stats %}
+    <div class="col-md-auto">
+        <div class="card">
+            <div class="card-body py-2">
+                <strong>This month vs last year</strong> — {{ this_month_stats.tasks_due }} tasks, {{ this_month_stats.completion_rate }}% complete, {{ this_month_stats.avg_readiness }} avg readiness
+                | Last year same month: {{ last_year_month_stats.tasks_due }} tasks, {{ last_year_month_stats.completion_rate }}% complete, {{ last_year_month_stats.avg_readiness }} avg readiness
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if claims_snapshot %}
+    <div class="col-md-auto">
+        <div class="card">
+            <div class="card-body py-2">
+                <strong>Claims Snapshot</strong> — This month: ${{ "{:,.0f}".format(claims_snapshot.current) }}
+                | vs last month: {% if claims_snapshot.pct_vs_last_month is not none %}{% if claims_snapshot.pct_vs_last_month >= 0 %}+{% endif %}{{ claims_snapshot.pct_vs_last_month }}%{% else %}-{% endif %}
+                | vs last year: {% if claims_snapshot.pct_vs_last_year is not none %}{% if claims_snapshot.pct_vs_last_year >= 0 %}+{% endif %}{{ claims_snapshot.pct_vs_last_year }}%{% else %}-{% endif %}
+                <a href="/claims" class="ms-1">View</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Today's Tasks</h5></div>
+            <div class="card-body">
+                {% if due_today %}
+                <ul class="list-group list-group-flush">
+                {% for t in due_today %}
+                <li class="list-group-item px-0"><a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a> — Due today</li>
+                {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0">None due today.</p>
+                {% endif %}
+
+                {% if overdue %}
+                <h6 class="mt-3">Overdue</h6>
+                <ul class="list-group list-group-flush">
+                {% for t in overdue %}
+                <li class="list-group-item px-0"><a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a> — {{ t.due_date }}</li>
+                {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if due_in_7 %}
+                <h6 class="mt-3">Due in 7 days</h6>
+                <ul class="list-group list-group-flush">
+                {% for t in due_in_7 %}
+                <li class="list-group-item px-0"><a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a> — {{ t.due_date }}</li>
+                {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Audit Risk (score &lt; 60)</h5></div>
+            <div class="card-body">
+                {% if audit_risk %}
+                <ul class="list-group list-group-flush">
+                {% for t in audit_risk %}
+                <li class="list-group-item px-0"><a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a> — {{ t.readiness.score }}/100</li>
+                {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0">None.</p>
+                {% endif %}
+
+                <h6 class="mt-3">Missing Required Evidence</h6>
+                {% if missing_required %}
+                <ul class="list-group list-group-flush">
+                {% for t in missing_required %}
+                <li class="list-group-item px-0"><a href="/tasks/{{ t.id }}">{{ t.template.name if t.template else 'Task' }}</a> — {{ t.missing_req }} req</li>
+                {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0">None.</p>
+                {% endif %}
+
+                <h6 class="mt-3">Recently Added Evidence (7 days)</h6>
+                {% if recent_evidence %}
+                <ul class="list-group list-group-flush">
+                {% for e in recent_evidence[:10] %}
+                <li class="list-group-item px-0"><a href="/tasks/{{ e.task.id }}">{{ e.original_filename }}</a> → {{ e.task.template.name if e.task.template else 'Task' }}</li>
+                {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0">None.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-2">Quick Actions</h5>
+<div class="mb-3">
+    <button type="button" class="btn btn-primary" onclick="document.getElementById('quick-capture-panel').classList.toggle('d-none')">Quick Capture</button>
+    <a href="/planner" class="btn btn-primary">Open Planner</a>
+    <a href="/assistant-v2" class="btn btn-primary">Open Assistant</a>
+</div>
+
+<div id="quick-capture-panel" class="card d-none">
+    <div class="card-body">
+{% include "quick_capture.html" %}
+    </div>
+</div>
+{% endblock %}
