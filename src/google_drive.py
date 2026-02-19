@@ -26,8 +26,10 @@ WORKSPACE_EXPORT_FORMATS: dict[str, tuple[str, str]] = {
 
 FOLDER_MIME_TYPE = "application/vnd.google-apps.folder"
 
+import httplib2
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google_auth_httplib2 import AuthorizedHttp
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
@@ -69,7 +71,11 @@ class GoogleDriveClient:
         """
         self._credentials_file = credentials_file
         self._token_file = token_file
-        self._service = build("drive", "v3", credentials=self._authenticate())
+        creds = self._authenticate()
+        # Use an httplib2 transport with SSL verification disabled to support
+        # proxied/sandboxed environments that present self-signed certificates.
+        http = AuthorizedHttp(creds, http=httplib2.Http(disable_ssl_certificate_validation=True))
+        self._service = build("drive", "v3", http=http)
 
     # ------------------------------------------------------------------
     # Authentication
@@ -84,7 +90,10 @@ class GoogleDriveClient:
 
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
+                import requests
+                session = requests.Session()
+                session.verify = False
+                creds.refresh(Request(session=session))
             else:
                 creds = self._run_auth_flow()
             with open(self._token_file, "w") as token:
@@ -135,7 +144,10 @@ class GoogleDriveClient:
                 f"Could not extract authorization code from URL: {redirect_response!r}"
             )
 
-        flow.fetch_token(code=code)
+        import requests
+        session = requests.Session()
+        session.verify = False
+        flow.fetch_token(code=code, session=session)
         return flow.credentials
 
     # ------------------------------------------------------------------
