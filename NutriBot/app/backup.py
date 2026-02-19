@@ -49,10 +49,12 @@ def list_backups() -> list[tuple[Path, datetime]]:
 
 
 def restore_backup(backup_path: Path) -> None:
-    """Restore db.sqlite from backup folder. Overwrites current DB."""
+    """Restore db.sqlite from backup folder. Backs up current DB first."""
     src = backup_path / "db.sqlite"
     if not src.exists():
         raise FileNotFoundError(f"No db.sqlite in {backup_path}")
+    if DB_PATH.exists():
+        create_backup()
     shutil.copy2(src, DB_PATH)
 
 

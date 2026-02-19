@@ -112,11 +112,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 MAX_UPLOAD_BYTES = 100 * 1024 * 1024  # 100 MB
+MAX_PDF_HTML_BYTES = 5 * 1024 * 1024  # 5 MB
+_CURRENT_YEAR = date.today().year
+_VALID_TIMEZONES: frozenset[str] = frozenset()
+
+try:
+    from zoneinfo import available_timezones
+    _VALID_TIMEZONES = frozenset(available_timezones())
+except Exception:
+    pass
 
 
 def _check_upload_size(content: bytes) -> None:
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(413, f"File exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit")
+
+
+def _validate_timezone(tz: Optional[str]) -> str:
+    """Return tz if valid, else 'America/Boise'. Skips check if zoneinfo unavailable."""
+    if not tz:
+        return "America/Boise"
+    if _VALID_TIMEZONES and tz not in _VALID_TIMEZONES:
+        raise HTTPException(400, f"Invalid timezone: {tz}")
+    return tz
 
 
 def get_db():
@@ -492,7 +510,7 @@ def onboarding_save(
     settings = load_settings()
     settings["district_name"] = district_name or ""
     settings["state"] = state or "Idaho"
-    settings["timezone"] = timezone or "America/Boise"
+    settings["timezone"] = _validate_timezone(timezone)
     settings["current_school_year"] = current_school_year or ""
     settings["programs"] = {
         "NSLP": nslp == "on",
@@ -568,7 +586,7 @@ def settings_save(
     settings = load_settings()
     settings["district_name"] = district_name or ""
     settings["state"] = state or "Idaho"
-    settings["timezone"] = timezone or "America/Boise"
+    settings["timezone"] = _validate_timezone(timezone)
     settings["current_school_year"] = current_school_year or ""
     settings["programs"] = {
         "NSLP": nslp == "on",
@@ -1235,6 +1253,8 @@ def create_task(
     due_date: Optional[str] = Form(None),
 ):
     """Create a new task instance."""
+    if not (2000 <= year <= _CURRENT_YEAR + 5):
+        raise HTTPException(400, f"Year must be between 2000 and {_CURRENT_YEAR + 5}")
     due = date.fromisoformat(due_date) if due_date else None
     task = TaskInstance(template_id=template_id, year=year, due_date=due)
     db.add(task)

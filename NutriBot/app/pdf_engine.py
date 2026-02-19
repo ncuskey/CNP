@@ -42,11 +42,17 @@ def _init_backend() -> tuple[bool, str]:
 PDF_AVAILABLE, PDF_BACKEND = _init_backend()
 
 
+MAX_HTML_BYTES = 5 * 1024 * 1024  # 5 MB
+
+
 def render_html_to_pdf(html: str, output_path: str) -> None:
     """
     Render HTML string to PDF file.
     Raises RuntimeError with install guidance if no backend available.
     """
+    if len(html.encode("utf-8")) > MAX_HTML_BYTES:
+        raise ValueError(f"HTML document too large for PDF generation (max {MAX_HTML_BYTES // (1024 * 1024)} MB)")
+
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
 

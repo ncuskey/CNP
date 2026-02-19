@@ -85,7 +85,7 @@ def add_reg(reg: dict[str, Any]) -> None:
     """Add a regulation. Assigns id if missing."""
     regs = load_reg_library()
     if "id" not in reg or not reg["id"]:
-        reg["id"] = str(uuid.uuid4())[:8]
+        reg["id"] = str(uuid.uuid4())
     regs.append(reg)
     save_reg_library(regs)
 
