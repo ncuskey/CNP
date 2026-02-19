@@ -18,32 +18,56 @@ if (sessionStorage.getItem('onboarding_banner_dismissed') === '1') {
 {% endif %}
 {% include "notification_banner.html" %}
 
-<div class="row g-2 mb-3">
-    <div class="col-md-auto">
-        <div class="card">
-            <div class="card-body py-2">
-                <strong>Review Status</strong> — Critical: {{ critical_count|default(0) }} | Avg readiness: {{ readiness_avg|default(100) }}
+<div class="row g-3 mb-4">
+    <!-- Review Status stat card -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Critical Issues</div>
+                <div class="fs-2 fw-bold {% if critical_count|default(0) > 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ critical_count|default(0) }}
+                </div>
+                <div class="text-muted small">Avg readiness: <strong>{{ readiness_avg|default(100) }}/100</strong></div>
             </div>
         </div>
     </div>
-    {% if this_month_stats and last_year_month_stats %}
-    <div class="col-md-auto">
-        <div class="card">
-            <div class="card-body py-2">
-                <strong>This month vs last year</strong> — {{ this_month_stats.tasks_due }} tasks, {{ this_month_stats.completion_rate }}% complete, {{ this_month_stats.avg_readiness }} avg readiness
-                | Last year same month: {{ last_year_month_stats.tasks_due }} tasks, {{ last_year_month_stats.completion_rate }}% complete, {{ last_year_month_stats.avg_readiness }} avg readiness
+
+    {% if this_month_stats %}
+    <!-- This month vs last year -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">This Month</div>
+                <div class="fs-2 fw-bold">{{ this_month_stats.completion_rate }}%</div>
+                <div class="text-muted small">
+                    {{ this_month_stats.tasks_due }} tasks due
+                    {% if last_year_month_stats %}
+                    · Last year: {{ last_year_month_stats.completion_rate }}%
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
     {% endif %}
+
     {% if claims_snapshot %}
-    <div class="col-md-auto">
-        <div class="card">
-            <div class="card-body py-2">
-                <strong>Claims Snapshot</strong> — This month: ${{ "{:,.0f}".format(claims_snapshot.current) }}
-                | vs last month: {% if claims_snapshot.pct_vs_last_month is not none %}{% if claims_snapshot.pct_vs_last_month >= 0 %}+{% endif %}{{ claims_snapshot.pct_vs_last_month }}%{% else %}-{% endif %}
-                | vs last year: {% if claims_snapshot.pct_vs_last_year is not none %}{% if claims_snapshot.pct_vs_last_year >= 0 %}+{% endif %}{{ claims_snapshot.pct_vs_last_year }}%{% else %}-{% endif %}
-                <a href="/claims" class="ms-1">View</a>
+    <!-- Claims snapshot -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Claims This Month</div>
+                <div class="fs-2 fw-bold">${{ "{:,.0f}".format(claims_snapshot.current) }}</div>
+                <div class="text-muted small">
+                    vs last month:
+                    <strong class="{% if claims_snapshot.pct_vs_last_month is not none and claims_snapshot.pct_vs_last_month >= 0 %}text-success{% elif claims_snapshot.pct_vs_last_month is not none %}text-danger{% endif %}">
+                        {% if claims_snapshot.pct_vs_last_month is not none %}{% if claims_snapshot.pct_vs_last_month >= 0 %}+{% endif %}{{ claims_snapshot.pct_vs_last_month }}%{% else %}—{% endif %}
+                    </strong>
+                    · vs last year:
+                    <strong class="{% if claims_snapshot.pct_vs_last_year is not none and claims_snapshot.pct_vs_last_year >= 0 %}text-success{% elif claims_snapshot.pct_vs_last_year is not none %}text-danger{% endif %}">
+                        {% if claims_snapshot.pct_vs_last_year is not none %}{% if claims_snapshot.pct_vs_last_year >= 0 %}+{% endif %}{{ claims_snapshot.pct_vs_last_year }}%{% else %}—{% endif %}
+                    </strong>
+                    · <a href="/claims">View</a>
+                </div>
             </div>
         </div>
     </div>

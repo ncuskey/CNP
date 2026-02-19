@@ -3,6 +3,17 @@
 {% block content %}
 <h1 class="mb-3">{% if task.month %}{{ task.template.name if task.template else 'Task' }} - {{ task.year }}-{{ "%02d"|format(task.month) }}{% else %}{{ task.template.name if task.template else 'Task' }} ({{ task.year }}){% endif %}</h1>
 
+<!-- Anchor navigation -->
+<nav class="mb-3 d-flex flex-wrap gap-2 small" aria-label="Page sections">
+    <a href="#section-edit" class="btn btn-outline-secondary btn-sm">Edit</a>
+    {% if data_fields %}<a href="#section-data" class="btn btn-outline-secondary btn-sm">Data</a>{% endif %}
+    <a href="#section-checklist" class="btn btn-outline-secondary btn-sm">Checklist</a>
+    <a href="#section-notes" class="btn btn-outline-secondary btn-sm">Notes</a>
+    <a href="#section-guidance" class="btn btn-outline-secondary btn-sm">Guidance</a>
+    <a href="#section-evidence" class="btn btn-outline-secondary btn-sm">Evidence</a>
+    <a href="#section-export" class="btn btn-outline-secondary btn-sm">Export</a>
+</nav>
+
 {% if request.cookies.get('review_mode') == '1' and (missing_required > 0 or not export_ready) %}
 <div class="alert alert-warning" role="alert">
     <strong>Review Mode:</strong> {% if missing_required > 0 %}Missing required evidence.{% endif %} {% if not export_ready %}Incomplete for audit packet.{% endif %}
@@ -42,7 +53,7 @@
 {% endif %}
 
 <!-- Edit task form -->
-<div class="card mb-3">
+<div class="card mb-3" id="section-edit">
     <div class="card-header"><h5 class="mb-0">Edit Task</h5></div>
     <div class="card-body">
         <form action="/tasks/{{ task.id }}/update" method="post">
@@ -74,7 +85,7 @@
 
 {% if data_fields %}
 <!-- Structured Data -->
-<div class="card mb-3">
+<div class="card mb-3" id="section-data">
     <div class="card-header"><h5 class="mb-0">Structured Data</h5></div>
     <div class="card-body">
         <form action="/tasks/{{ task.id }}/data/save" method="post">
@@ -108,7 +119,7 @@
 {% endif %}
 
 <!-- Checklist -->
-<div class="card mb-3">
+<div class="card mb-3" id="section-checklist">
     <div class="card-header"><h5 class="mb-0">Checklist</h5></div>
     <div class="card-body">
         <div id="checklist-container" class="list-group list-group-flush mb-2">
@@ -131,7 +142,7 @@
 </div>
 
 <!-- Notes log -->
-<div class="card mb-3">
+<div class="card mb-3" id="section-notes">
     <div class="card-header"><h5 class="mb-0">Notes</h5></div>
     <div class="card-body">
         <div id="notes-container" class="notes-log mb-2">
@@ -153,7 +164,7 @@
 </div>
 
 <!-- Guidance -->
-<div class="card mb-3">
+<div class="card mb-3" id="section-guidance">
     <div class="card-header"><h5 class="mb-0">Guidance</h5></div>
     <div class="card-body">
         <p><strong>Audit readiness:</strong> {{ readiness.score }}/100</p>
@@ -187,7 +198,7 @@
 </div>
 
 <!-- Evidence -->
-<div class="card mb-3" id="evidence">
+<div class="card mb-3" id="section-evidence">
     <div class="card-header"><h5 class="mb-0">Evidence</h5></div>
     <div class="card-body">
         {% if missing_required > 0 or missing_supporting > 0 %}
@@ -218,52 +229,78 @@
         <li class="list-group-item px-0">No evidence yet.</li>
         {% endfor %}
         </ul>
-        <p><strong>Single file:</strong></p>
-        <form action="/tasks/{{ task.id }}/evidence" method="post" enctype="multipart/form-data" class="row g-2 mb-2">
-            <div class="col-auto"><input type="file" class="form-control form-control-sm" name="file" required></div>
-            <div class="col-auto">
+        <!-- Upload: shared type/importance fields, toggle between single and bulk -->
+        <div class="mb-3">
+            <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Upload mode">
+                <button type="button" class="btn btn-outline-secondary active" id="upload-tab-single" onclick="showUploadTab('single')">Single file</button>
+                <button type="button" class="btn btn-outline-secondary" id="upload-tab-bulk" onclick="showUploadTab('bulk')">Multiple files</button>
+            </div>
+
+            <!-- Shared fields -->
+            <div class="mb-2">
                 <label class="form-label small d-block">Evidence types (select all that apply):</label>
-                <div class="d-flex flex-wrap gap-2">
+                <div class="d-flex flex-wrap gap-2" id="shared-evidence-types">
                     {% for et in evidence_types %}
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" name="evidence_types" value="{{ et }}" id="et-{{ loop.index }}">
-                        <label class="form-check-label small" for="et-{{ loop.index }}">{{ et }}</label>
+                        <input class="form-check-input" type="checkbox" value="{{ et }}" id="et-shared-{{ loop.index }}" name="evidence_types_shared">
+                        <label class="form-check-label small" for="et-shared-{{ loop.index }}">{{ et }}</label>
                     </div>
                     {% endfor %}
                 </div>
             </div>
-            <div class="col-auto"><select class="form-select form-select-sm" name="importance" required>
-                {% for imp in importance_levels %}<option value="{{ imp }}">{{ imp }}</option>{% endfor %}
-            </select></div>
-            <div class="col-auto"><input type="text" class="form-control form-control-sm" name="description" placeholder="Description"></div>
-            <div class="col-auto"><input type="text" class="form-control form-control-sm" name="category_override" placeholder="Category override (optional)"></div>
-            <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Attach</button></div>
-        </form>
-        <p><strong>Multiple files (bulk):</strong></p>
-        <form action="/tasks/{{ task.id }}/evidence/upload-bulk" method="post" enctype="multipart/form-data" class="row g-2 mb-2">
-            <div class="col-auto"><input type="file" class="form-control form-control-sm" name="files" multiple required></div>
-            <div class="col-auto">
-                <label class="form-label small d-block">Evidence types (select all that apply):</label>
-                <div class="d-flex flex-wrap gap-2">
-                    {% for et in evidence_types %}
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" name="evidence_types" value="{{ et }}" id="et-bulk-{{ loop.index }}">
-                        <label class="form-check-label small" for="et-bulk-{{ loop.index }}">{{ et }}</label>
-                    </div>
-                    {% endfor %}
+            <div class="row g-2 mb-2">
+                <div class="col-auto">
+                    <select class="form-select form-select-sm" id="shared-importance">
+                        {% for imp in importance_levels %}<option value="{{ imp }}">{{ imp }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <input type="text" class="form-control form-control-sm" id="shared-description" placeholder="Description">
                 </div>
             </div>
-            <div class="col-auto"><select class="form-select form-select-sm" name="importance" required>
-                {% for imp in importance_levels %}<option value="{{ imp }}">{{ imp }}</option>{% endfor %}
-            </select></div>
-            <div class="col-auto"><input type="text" class="form-control form-control-sm" name="description" placeholder="Description (or filename per file)"></div>
-            <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm">Attach All</button></div>
-        </form>
+
+            <!-- Single file form -->
+            <form id="upload-form-single" action="/tasks/{{ task.id }}/evidence" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2" onsubmit="syncSharedFields(this)">
+                <input type="hidden" name="importance">
+                <input type="hidden" name="description">
+                <input type="hidden" name="category_override">
+                <input type="file" class="form-control form-control-sm" name="file" style="max-width:260px" required>
+                <input type="text" class="form-control form-control-sm" name="category_override_visible" placeholder="Category override (optional)" style="max-width:180px"
+                       oninput="this.form.querySelector('[name=category_override]').value=this.value">
+                <button type="submit" class="btn btn-primary btn-sm">Attach</button>
+            </form>
+
+            <!-- Bulk form (hidden by default) -->
+            <form id="upload-form-bulk" action="/tasks/{{ task.id }}/evidence/upload-bulk" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2 d-none" onsubmit="syncSharedFields(this)">
+                <input type="hidden" name="importance">
+                <input type="hidden" name="description">
+                <input type="file" class="form-control form-control-sm" name="files" multiple style="max-width:260px" required>
+                <button type="submit" class="btn btn-primary btn-sm">Attach All</button>
+            </form>
+        </div>
+        <script>
+        function showUploadTab(mode) {
+            document.getElementById('upload-form-single').classList.toggle('d-none', mode !== 'single');
+            document.getElementById('upload-form-bulk').classList.toggle('d-none', mode !== 'bulk');
+            document.getElementById('upload-tab-single').classList.toggle('active', mode === 'single');
+            document.getElementById('upload-tab-bulk').classList.toggle('active', mode === 'bulk');
+        }
+        function syncSharedFields(form) {
+            var types = Array.from(document.querySelectorAll('#shared-evidence-types input:checked')).map(function(c){return c.value;});
+            types.forEach(function(t) {
+                var h = document.createElement('input');
+                h.type = 'hidden'; h.name = 'evidence_types'; h.value = t;
+                form.appendChild(h);
+            });
+            form.querySelector('[name=importance]').value = document.getElementById('shared-importance').value;
+            form.querySelector('[name=description]').value = document.getElementById('shared-description').value;
+        }
+        </script>
     </div>
 </div>
 
 <!-- Export -->
-<div class="card">
+<div class="card" id="section-export">
     <div class="card-header"><h5 class="mb-0">Export</h5></div>
     <div class="card-body">
         <form action="/tasks/{{ task.id }}/export" method="post">
