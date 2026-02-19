@@ -14,6 +14,9 @@ data/*.sqlite
 vault/*
 !vault/.gitkeep
 
+# Backups (runtime-generated SQLite snapshots)
+backups/
+
 # IDE
 .idea/
 .vscode/
