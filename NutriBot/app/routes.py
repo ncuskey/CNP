@@ -111,6 +111,13 @@ router = APIRouter()
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
+MAX_UPLOAD_BYTES = 100 * 1024 * 1024  # 100 MB
+
+
+def _check_upload_size(content: bytes) -> None:
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, f"File exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit")
+
 
 def get_db():
     """Dependency: yield DB session."""
@@ -713,8 +720,10 @@ def regulations_upload(
     dest_dir.mkdir(parents=True, exist_ok=True)
     safe_name = "".join(c for c in file.filename if c.isalnum() or c in "._- ") or "document.pdf"
     dest_path = dest_dir / safe_name
+    content = file.file.read()
+    _check_upload_size(content)
     with open(dest_path, "wb") as f:
-        f.write(file.file.read())
+        f.write(content)
     rel_path = f"_regulations/{subdir}/{safe_name}"
     update_reg(reg_id, {"local_file_path": rel_path})
     return RedirectResponse(url=f"/regulations/{reg_id}?uploaded=1", status_code=303)
@@ -1454,17 +1463,20 @@ async def attach_evidence_bulk(
     for file in files:
         if not file.filename:
             continue
-        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp:
-            tmp.write(await file.read())
+        safe_filename = _sanitize_upload_filename(file.filename)
+        content = await file.read()
+        _check_upload_size(content)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(safe_filename).suffix) as tmp:
+            tmp.write(content)
             tmp_path = Path(tmp.name)
         try:
-            dest_path, stored_fn, rel_path = store_evidence_file(task, template, tmp_path, file.filename)
+            dest_path, stored_fn, rel_path = store_evidence_file(task, template, tmp_path, safe_filename)
         finally:
             tmp_path.unlink(missing_ok=True)
         now = datetime.utcnow()
         primary_type = types_list[0]
         keep_until, review_date, rule_id, _ = apply_retention_rule(db, cat or "Other", primary_type, importance, now)
-        desc = description.strip() or file.filename
+        desc = description.strip() or safe_filename
         item = EvidenceItem(
             task_id=task_id,
             category=cat,
@@ -1515,12 +1527,15 @@ async def attach_evidence(
         raise HTTPException(400, "Invalid importance")
     if not file.filename:
         raise HTTPException(400, "No file provided")
+    safe_filename = _sanitize_upload_filename(file.filename)
     import tempfile
-    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp:
-        tmp.write(file.file.read())
+    content = file.file.read()
+    _check_upload_size(content)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(safe_filename).suffix) as tmp:
+        tmp.write(content)
         tmp_path = Path(tmp.name)
     try:
-        dest_path, stored_fn, rel_path = store_evidence_file(task, template, tmp_path, file.filename)
+        dest_path, stored_fn, rel_path = store_evidence_file(task, template, tmp_path, safe_filename)
     finally:
         tmp_path.unlink(missing_ok=True)
     cat = category_override.strip() or (template.category if template else "")
@@ -1534,7 +1549,7 @@ async def attach_evidence(
         evidence_types_json=json.dumps(types_list),
         importance=importance,
         description=description,
-        original_filename=file.filename,
+        original_filename=safe_filename,
         stored_filename=stored_fn,
         file_path=rel_path,
         retention_rule_id=rule_id,
@@ -1750,12 +1765,15 @@ async def quick_evidence(
         raise HTTPException(400, "Invalid importance")
     if not file.filename:
         raise HTTPException(400, "No file provided")
+    safe_filename = _sanitize_upload_filename(file.filename)
     import tempfile
-    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp:
-        tmp.write(file.file.read())
+    content = file.file.read()
+    _check_upload_size(content)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(safe_filename).suffix) as tmp:
+        tmp.write(content)
         tmp_path = Path(tmp.name)
     try:
-        dest_path, stored_fn, rel_path = store_evidence_file(task, template, tmp_path, file.filename)
+        dest_path, stored_fn, rel_path = store_evidence_file(task, template, tmp_path, safe_filename)
     finally:
         tmp_path.unlink(missing_ok=True)
     cat = template.category if template else ""
@@ -1769,7 +1787,7 @@ async def quick_evidence(
         evidence_types_json=json.dumps(types_list),
         importance=importance,
         description=description,
-        original_filename=file.filename,
+        original_filename=safe_filename,
         stored_filename=stored_fn,
         file_path=rel_path,
         retention_rule_id=rule_id,
@@ -2227,9 +2245,11 @@ async def retention_bulk_action(
     """Bulk update disposition, review_date, or keep_until for selected evidence items."""
     form = await request.form()
     raw = form.getlist("item_id")
-    ids = [int(x) for x in raw if str(x).isdigit()]
+    ids = [int(x) for x in raw if str(x).isdigit() and int(x) > 0]
     if not ids:
         return RedirectResponse(url="/retention", status_code=303)
+    if len(ids) > 500:
+        raise HTTPException(400, "Too many items selected (max 500)")
     for iid in ids:
         item = db.get(EvidenceItem, iid)
         if not item:
@@ -2401,6 +2421,17 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
     )
 
 
+def _validate_inbox_filename(filename: str) -> None:
+    """Reject filenames that could escape the inbox directory."""
+    if not filename or ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(400, "Invalid filename")
+
+
+def _sanitize_upload_filename(filename: str) -> str:
+    """Strip directory components from an upload filename."""
+    return Path(filename).name
+
+
 @router.get("/inbox/assign", response_class=HTMLResponse)
 def inbox_assign_form(
     request: Request,
@@ -2410,6 +2441,7 @@ def inbox_assign_form(
     """Form to assign inbox file to task."""
     from urllib.parse import unquote
     filename = unquote(filename)
+    _validate_inbox_filename(filename)
     inbox_path = INBOX_DIR / filename
     if not inbox_path.exists():
         raise HTTPException(404, "File not found in inbox")
@@ -2459,6 +2491,7 @@ async def inbox_assign(
             raise HTTPException(400, f"Invalid evidence type: {t}")
     if importance not in IMPORTANCE_LEVELS:
         raise HTTPException(400, "Invalid importance")
+    _validate_inbox_filename(filename)
     try:
         dest_path, stored_fn, rel_path = store_evidence_from_inbox(task, template, filename)
     except FileNotFoundError as e:
@@ -2520,6 +2553,7 @@ async def inbox_assign_bulk(
         if not filename or not filename.strip():
             continue
         try:
+            _validate_inbox_filename(filename.strip())
             dest_path, stored_fn, rel_path = store_evidence_from_inbox(task, template, filename.strip())
         except FileNotFoundError:
             failures.append(filename)
@@ -2557,6 +2591,7 @@ async def inbox_assign_bulk(
 @router.post("/inbox/delete")
 def inbox_delete(filename: str = Form(...)):
     """Delete file from inbox."""
+    _validate_inbox_filename(filename)
     if delete_inbox_file(filename):
         return RedirectResponse(url="/inbox", status_code=303)
     raise HTTPException(404, "File not found in inbox")
@@ -2869,6 +2904,17 @@ def exports_page(
     )
 
 
+_CSV_INJECTION_CHARS = frozenset(("=", "+", "-", "@", "\t", "\r"))
+
+
+def _csv_safe(val: object) -> str:
+    """Prefix formula-triggering characters to prevent CSV injection."""
+    s = str(val)
+    if s and s[0] in _CSV_INJECTION_CHARS:
+        return "'" + s
+    return s
+
+
 def _csv_stream(rows: list, headers: list[str]):
     """Yield CSV lines as bytes."""
     buf = io.StringIO()
@@ -2906,10 +2952,10 @@ def export_tasks_csv(
         title = f"{t.template.name if t.template else 'Task'}" + (f" - {t.year}-{t.month:02d}" if t.month else f" ({t.year})")
         rows.append([
             t.id,
-            title,
-            t.template.category if t.template else "",
+            _csv_safe(title),
+            _csv_safe(t.template.category if t.template else ""),
             str(t.due_date) if t.due_date else "",
-            t.status,
+            _csv_safe(t.status),
             r.get("score", 0),
             r.get("required_missing_count", mr),
             r.get("supporting_missing_count", ms),
@@ -2954,16 +3000,16 @@ def export_evidence_csv(
         rows.append([
             e.id,
             e.task_id,
-            task_title,
-            e.category,
-            ",".join(get_evidence_types(e)),
-            e.importance,
-            e.original_filename,
-            e.stored_filename,
+            _csv_safe(task_title),
+            _csv_safe(e.category),
+            _csv_safe(",".join(get_evidence_types(e))),
+            _csv_safe(e.importance),
+            _csv_safe(e.original_filename),
+            _csv_safe(e.stored_filename),
             str(e.added_at) if e.added_at else "",
             str(e.keep_until) if e.keep_until else "",
             str(e.review_date) if e.review_date else "",
-            e.disposition,
+            _csv_safe(e.disposition),
         ])
     return StreamingResponse(
         _csv_stream(rows, headers),

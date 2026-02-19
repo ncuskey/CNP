@@ -67,7 +67,9 @@ def compute_due_date(rule: Optional[str], year: int, month: Optional[int] = None
         return None
 
     if rule_type == "ANNUAL":
-        return date(year, params["month"], params["day"])
+        month = params["month"]
+        day = min(params["day"], 28 if month == 2 else (30 if month in (4, 6, 9, 11) else 31))
+        return date(year, month, day)
     if rule_type == "MONTHLY":
         if month is not None and 1 <= month <= 12:
             # Handle day overflow (e.g., day 31 in Feb)
