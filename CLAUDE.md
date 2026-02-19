@@ -21,9 +21,24 @@ This file provides AI assistants (Claude Code and similar tools) with the contex
 ```
 CNP/
 ├── CLAUDE.md              # This file
-├── requirements.txt       # Python dependencies
-└── src/
-    └── google_drive.py    # GoogleDriveClient — list, download, upload via Drive API v3
+├── requirements.txt       # Python dependencies (Google Drive client)
+├── credentials.json       # OAuth 2.0 client secrets (DO NOT COMMIT)
+├── token.json             # Cached OAuth token (DO NOT COMMIT)
+├── scripts/
+│   ├── clone_drive_folder.py   # Mirror a Drive folder tree to data/drive/
+│   ├── _get_auth_url.py        # Print OAuth consent URL for headless auth
+│   └── _exchange_token.py      # Exchange auth code for token.json
+├── src/
+│   └── google_drive.py    # GoogleDriveClient — list, download, upload via Drive API v3
+└── NutriBot/              # BCSD Child Nutrition Ops Console (FastAPI app)
+    ├── main.py            # Uvicorn entry point
+    ├── app.py             # Alternate entry point
+    ├── requirements.txt   # NutriBot-specific dependencies
+    ├── app/               # Application modules (routes, models, DB, etc.)
+    ├── templates/         # Jinja2 HTML templates
+    ├── static/            # CSS and static assets
+    ├── vault/             # Document vault (served at /vault)
+    └── data/              # SQLite database and settings JSON
 ```
 
 ### `src/google_drive.py`
@@ -44,6 +59,28 @@ CNP/
 3. Create **OAuth 2.0 Client ID** credentials (Desktop app type).
 4. Download the client secrets JSON and save it as `credentials.json` in the project root.
 5. On first run, a browser window will open for user consent. The granted token is cached in `token.json`.
+
+### `NutriBot/`
+
+A local compliance and memory system for school nutrition programs (BCSD). Built with **FastAPI + SQLModel (SQLite) + Jinja2**. Key modules:
+
+| Module | Description |
+|---|---|
+| `app/routes.py` | All HTTP route handlers |
+| `app/models.py` | SQLModel ORM models |
+| `app/database.py` | Engine, session management, directory setup |
+| `app/evidence.py` | Evidence library and retention rules |
+| `app/ocr_extract.py` | OCR via Tesseract + PyMuPDF |
+| `app/pdf_engine.py` | PDF generation (WeasyPrint / ReportLab) |
+| `app/search_index.py` | Full-text search index |
+| `app/backup.py` | Automatic SQLite backups |
+
+**Run locally:**
+```bash
+cd NutriBot
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
 
 ---
 
